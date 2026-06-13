@@ -54,20 +54,25 @@ RUN curl -fsSL \
         -o /usr/local/bin/opam \
     && chmod +x /usr/local/bin/opam
 
-# Initialise opam (this registers the default repository), then create the
-# OxCaml switch with the OxCaml repository layered over the default one (ox
-# first = higher priority), mirroring the official OxCaml install command.
-# Sandboxing is disabled because bubblewrap does not work in an unprivileged
-# container build.
-RUN opam init --bare --disable-sandboxing \
-    && opam switch create 5.2.0+ox ocaml-variants.5.2.0+ox \
-        --repos ox=git+https://github.com/oxcaml/opam-repository.git,default
-
-# Install the project's dependencies. Copying only the opam file first means
-# this expensive layer is reused as long as the dependency set is unchanged.
+# Create the OxCaml switch and install the project's dependencies, then drop
+# opam's caches -- all in a single RUN. This is done together on purpose: opam's
+# download cache (which includes multi-GB git clones of the opam repositories)
+# must be removed in the SAME layer that creates it, otherwise it stays baked
+# into an earlier layer and bloats the image past what a CI runner can extract
+# ("no space left on device" while unpacking).
+#
+# opam init registers the default repository; the switch then layers the OxCaml
+# repository over it (ox first = higher priority), mirroring the official OxCaml
+# install. Sandboxing is disabled because bubblewrap does not work in an
+# unprivileged container build. None of the cleaned caches are needed at CI
+# runtime (we only build, test, and run -- never `opam install` again).
 WORKDIR /src
 COPY jsip-exchange.opam ./
-RUN opam install . --deps-only --with-test
+RUN opam init --bare --disable-sandboxing \
+    && opam switch create 5.2.0+ox ocaml-variants.5.2.0+ox \
+        --repos ox=git+https://github.com/oxcaml/opam-repository.git,default \
+    && opam install . --deps-only --with-test \
+    && opam clean --download-cache --repo-cache --logs --yes
 
 # Bake the switch environment into the image so `dune`/tools are on PATH even
 # in non-login shells. CI steps additionally run `eval $(opam env)` for the
