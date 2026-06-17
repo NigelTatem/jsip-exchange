@@ -62,6 +62,12 @@ let find t order_id =
   match find_in Buy with Some _ as result -> result | None -> find_in Sell
 ;;
 
+let break_tie_by_time order1 order2 =
+  if Order_id.compare (Order.order_id order1) (Order.order_id order2) < 0
+  then order1
+  else order2
+;;
+
 (* NOTE: This walks the list front-to-back and returns the *first* tradable
    order, not the best-priced one. Orders are in reverse insertion order
    (newest first), so this matches against whatever was most recently added,
@@ -71,32 +77,35 @@ let find_match t incoming =
   let incoming_side = Order.side incoming in
   let opposite_side = Side.flip incoming_side in
   let resting_orders = side_list t opposite_side in
-  let is_marketable ~price ~resting_price =
-    match (incoming_side : Side.t) with
-    | Buy -> Price.( >= ) price resting_price
-    | Sell -> Price.( <= ) price resting_price
-  in
-  List.find resting_orders ~f:(fun resting ->
-    is_marketable
+  List.filter resting_orders ~f:(fun resting ->
+    Price.is_marketable
+      incoming_side
       ~price:(Order.price incoming)
       ~resting_price:(Order.price resting))
+  |> List.reduce ~f:(fun best resting ->
+    if Price.is_more_aggressive
+         incoming_side
+         ~price:(Order.price resting)
+         ~than:(Order.price best)
+    then resting
+    else if Price.equal (Order.price best) (Order.price resting)
+    then break_tie_by_time best resting
+    else best)
 ;;
 
 let orders_on_side t side = side_list t side
 let is_empty t = List.is_empty t.bids && List.is_empty t.asks
 let count t side = List.length (side_list t side)
 
+let best_price_helper ~side price1 price2 =
+  if Price.is_more_aggressive side ~price:price1 ~than:price2
+  then price1
+  else price2
+;;
+
 let best_price t side =
-  match side_list t side with
-  | [] -> None
-  | first :: rest ->
-    let is_better =
-      match (side : Side.t) with Buy -> Price.( > ) | Sell -> Price.( < )
-    in
-    Some
-      (List.fold rest ~init:(Order.price first) ~f:(fun best order ->
-         let price = Order.price order in
-         if is_better price best then price else best))
+  let price_list = List.map (side_list t side) ~f:Order.price in
+  List.reduce price_list ~f:(best_price_helper ~side)
 ;;
 
 let best_level t side : Level.t option =

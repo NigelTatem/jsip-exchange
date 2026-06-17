@@ -74,3 +74,87 @@ let%expect_test "negative to_string_dollar" =
   print_endline (Price.to_string_dollar (Price.of_int_cents (-150)));
   [%expect {| -$1.50 |}]
 ;;
+
+let%expect_test "is_more_aggressive: lower buy" =
+  let price = Price.of_int_cents 0 in
+  let than = Price.of_int_cents 1 in
+  let result = Price.is_more_aggressive Side.Buy ~price ~than in
+  [%test_result: bool] result ~expect:false
+;;
+
+let%expect_test "is_more_aggressive: higher buy" =
+  let price = Price.of_int_cents 1 in
+  let than = Price.of_int_cents 0 in
+  let result = Price.is_more_aggressive Side.Buy ~price ~than in
+  [%test_result: bool] result ~expect:true
+;;
+
+let%expect_test "is_more_aggressive: equal buy" =
+  let price = Price.of_int_cents 0 in
+  let than = Price.of_int_cents 0 in
+  let result = Price.is_more_aggressive Side.Buy ~price ~than in
+  [%test_result: bool] result ~expect:false
+;;
+
+let%expect_test "is_more_aggressive: lower sell" =
+  let price = Price.of_int_cents 0 in
+  let than = Price.of_int_cents 1 in
+  let result = Price.is_more_aggressive Side.Sell ~price ~than in
+  [%test_result: bool] result ~expect:true
+;;
+
+let%expect_test "is_more_aggressive: higher sell" =
+  let price = Price.of_int_cents 1 in
+  let than = Price.of_int_cents 0 in
+  let result = Price.is_more_aggressive Side.Sell ~price ~than in
+  [%test_result: bool] result ~expect:false
+;;
+
+let%expect_test "is_more_aggressive: equal sell" =
+  let price = Price.of_int_cents 0 in
+  let than = Price.of_int_cents 0 in
+  let result = Price.is_more_aggressive Side.Sell ~price ~than in
+  [%test_result: bool] result ~expect:false
+;;
+
+let%expect_test "is_marketable: equal buy" =
+  let price = Price.of_int_cents 0 in
+  let resting_price = Price.of_int_cents 0 in
+  let result = Price.is_marketable Side.Buy ~price ~resting_price in
+  [%test_result: bool] result ~expect:true
+;;
+
+let%expect_test "is_marketable: higher buy" =
+  let price = Price.of_int_cents 1 in
+  let resting_price = Price.of_int_cents 0 in
+  let result = Price.is_marketable Side.Buy ~price ~resting_price in
+  [%test_result: bool] result ~expect:true
+;;
+
+let%expect_test "is_marketable: lower buy" =
+  let price = Price.of_int_cents 0 in
+  let resting_price = Price.of_int_cents 1 in
+  let result = Price.is_marketable Side.Buy ~price ~resting_price in
+  [%test_result: bool] result ~expect:false
+;;
+
+let%expect_test "is_marketable: equal sell" =
+  let price = Price.of_int_cents 0 in
+  let resting_price = Price.of_int_cents 0 in
+  let result = Price.is_marketable Side.Sell ~price ~resting_price in
+  [%test_result: bool] result ~expect:true
+;;
+
+let%expect_test "is_marketable: higher sell" =
+  let price = Price.of_int_cents 1 in
+  let resting_price = Price.of_int_cents 0 in
+  let result = Price.is_marketable Side.Sell ~price ~resting_price in
+  [%test_result: bool] result ~expect:false
+;;
+
+let%expect_test "is_marketable: lower sell" =
+  let price = Price.of_int_cents 0 in
+  let resting_price = Price.of_int_cents 1 in
+  let result = Price.is_marketable Side.Sell ~price ~resting_price in
+  [%test_result: bool] result ~expect:true
+;;
