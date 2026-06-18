@@ -66,7 +66,7 @@ let compare_order_time order1 order2 =
   Order_id.compare (Order.order_id order1) (Order.order_id order2)
 ;;
 
-let find_best_order side order1 order2 =
+let compare_order_price_and_time side order1 order2 =
   let p1 = Order.price order1 in
   let p2 = Order.price order2 in
   if Price.equal p1 p2
@@ -92,15 +92,8 @@ let find_match t incoming =
       incoming_side
       ~price:(Order.price incoming)
       ~resting_price:(Order.price resting))
-  |> List.reduce ~f:(fun best resting ->
-    if Price.is_more_aggressive
-         incoming_side
-         ~price:(Order.price resting)
-         ~than:(Order.price best)
-    then resting
-    else if Price.equal (Order.price best) (Order.price resting)
-    then if compare_order_time best resting > 0 then best else resting
-    else best)
+  |> List.max_elt ~compare:(fun best resting ->
+    compare_order_price_and_time incoming_side best resting)
 ;;
 
 let orders_on_side t side = side_list t side
@@ -137,7 +130,7 @@ let best_bid_offer t : Bbo.t =
 
 let snapshot_side t (side : Side.t) =
   orders_on_side t side
-  |> List.sort ~compare:(find_best_order side)
+  |> List.sort ~compare:(compare_order_price_and_time side)
   |> List.map ~f:Level.of_order
 ;;
 
