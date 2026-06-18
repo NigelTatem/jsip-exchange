@@ -62,10 +62,20 @@ let find t order_id =
   match find_in Buy with Some _ as result -> result | None -> find_in Sell
 ;;
 
-let break_tie_by_time order1 order2 =
-  if Order_id.compare (Order.order_id order1) (Order.order_id order2) < 0
-  then order1
-  else order2
+let compare_order_time order1 order2 =
+  Order_id.compare (Order.order_id order1) (Order.order_id order2)
+;;
+
+let find_best_order side order1 order2 =
+  let p1 = Order.price order1 in
+  let p2 = Order.price order2 in
+  if Price.equal p1 p2
+  then (
+    let earliest_order = compare_order_time order1 order2 in
+    if earliest_order >= 0 then 1 else -1)
+  else if Price.is_more_aggressive side ~price:p1 ~than:p2
+  then 1
+  else -1
 ;;
 
 (* NOTE: This walks the list front-to-back and returns the *first* tradable
@@ -89,7 +99,7 @@ let find_match t incoming =
          ~than:(Order.price best)
     then resting
     else if Price.equal (Order.price best) (Order.price resting)
-    then break_tie_by_time best resting
+    then if compare_order_time best resting > 0 then best else resting
     else best)
 ;;
 
@@ -126,12 +136,9 @@ let best_bid_offer t : Bbo.t =
 ;;
 
 let snapshot_side t (side : Side.t) =
-  let compare =
-    match side with
-    | Buy -> Comparable.reverse Level.compare
-    | Sell -> Level.compare
-  in
-  orders_on_side t side |> List.map ~f:Level.of_order |> List.sort ~compare
+  orders_on_side t side
+  |> List.sort ~compare:(find_best_order side)
+  |> List.map ~f:Level.of_order
 ;;
 
 let snapshot t =
