@@ -106,8 +106,8 @@ let%expect_test "aggressor sweeps multiple resting orders" =
     ACCEPTED id=1 AAPL SELL 50@$150.00 DAY
     ACCEPTED id=2 AAPL SELL 80@$150.00 DAY
     ACCEPTED id=3 AAPL BUY 100@$150.00 DAY
-    FILL fill_id=1 AAPL $150.00 x80 aggressor=3(Alice) BUY resting=2(Charlie)
-    FILL fill_id=2 AAPL $150.00 x20 aggressor=3(Alice) BUY resting=1(Bob)
+    FILL fill_id=1 AAPL $150.00 x50 aggressor=3(Alice) BUY resting=1(Bob)
+    FILL fill_id=2 AAPL $150.00 x50 aggressor=3(Alice) BUY resting=2(Charlie)
     |}]
 ;;
 
@@ -320,8 +320,8 @@ let%expect_test "trade report emitted for each fill" =
         | _ -> false))
     events;
   [%expect {|
-    TRADE AAPL $150.00 x80
-    TRADE AAPL $150.00 x20
+    TRADE AAPL $150.00 x50
+    TRADE AAPL $150.00 x50
     |}]
 ;;
 
