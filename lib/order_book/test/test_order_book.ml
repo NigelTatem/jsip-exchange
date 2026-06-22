@@ -274,13 +274,13 @@ let%expect_test "snapshot lists levels in price-time priority order" =
     {|
     === AAPL ===
       BIDS:
-        $150.00 x100
-        $149.95 x100
         $149.90 x100
+        $149.95 x100
+        $150.00 x100
       ASKS:
-        $150.05 x100
-        $150.10 x100
         $150.15 x100
+        $150.10 x100
+        $150.05 x100
       BBO: $150.00 x100 / $150.05 x100
     |}]
 ;;

@@ -5,8 +5,11 @@ open Jsip_gateway
 
 let print_parse line =
   match Exchange_command.parse line with
-  | Error msg -> print_endline [%string "ERROR: %{msg}"]
-  | Ok req -> print_endline [%string "%{req#Order.Request}"]
+  | Ok (Submit req) -> print_endline [%string "%{req#Order.Request}"]
+  | Ok (Book symbol) -> print_endline [%string "BOOK %{symbol#Symbol}"]
+  | Ok (Subscribe symbol) ->
+    print_endline [%string "SUBSCRIBE %{symbol#Symbol}"]
+  | Error err -> print_endline [%string "ERROR: %{Error.to_string_hum err}"]
 ;;
 
 (* --- Successful parsing --- *)
@@ -79,7 +82,7 @@ let%expect_test "parse error: empty string" =
 
 let%expect_test "parse error: unknown command" =
   print_parse "HOLD AAPL 100 150.00";
-  [%expect {| ERROR: unknown command: HOLD (expected BUY or SELL) |}]
+  [%expect {| ERROR: unknown command: HOLD |}]
 ;;
 
 let%expect_test "parse error: missing fields" =
@@ -87,8 +90,8 @@ let%expect_test "parse error: missing fields" =
   print_parse "BUY";
   [%expect
     {|
-    ERROR: expected: BUY|SELL <symbol> <size> <price> [DAY|IOC] [as <name>]
-    ERROR: expected: BUY|SELL <symbol> <size> <price> [DAY|IOC] [as <name>]
+    ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>]
+    ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>]
     |}]
 ;;
 
@@ -107,42 +110,41 @@ let%expect_test "parse error: invalid size" =
 let%expect_test "parse error: invalid price" =
   print_parse "BUY AAPL 100 xyz";
   [%expect
-    {|
-    ERROR: invalid price: xyz
-    exception: (Invalid_argument "Float.of_string xyz")
-    |}]
+    {| ERROR: (Invalid_argument "Float.of_string xyz") |}]
 ;;
 
 let%expect_test "parse error: unknown time-in-force" =
   print_parse "BUY AAPL 100 150.00 QQQ";
-  [%expect {| ERROR: unknown time-in-force: QQQ (expected DAY or IOC) |}]
+  [%expect {| ERROR: unknown time-in-force: QQQ (expected DAY|IOC) |}]
 ;;
 
-(* --- parse_command_with_default_participant --- *)
+(* Default participant override and explicit `as` clause preservation *)
 
 let%expect_test "default participant: used when none specified" =
   let default = Participant.of_string "DefaultTrader" in
-  let req =
-    Exchange_command.parse_command_with_default_participant
-      "BUY AAPL 100 150.00"
-      ~default
-    |> Result.map_error ~f:Error.of_string
+  let cmd =
+    Exchange_command.parse "BUY AAPL 100 150.00" ~default_participant:default
     |> ok_exn
   in
-  print_endline [%string "participant=%{req.participant#Participant}"];
+  (match cmd with
+   | Submit req ->
+     print_endline [%string "participant=%{req.participant#Participant}"]
+   | Book _ | Subscribe _ -> print_endline "unexpected command shape");
   [%expect {| participant=DefaultTrader |}]
 ;;
 
 let%expect_test "default participant: overridden by explicit 'as'" =
   let default = Participant.of_string "DefaultTrader" in
-  let req =
-    Exchange_command.parse_command_with_default_participant
+  let cmd =
+    Exchange_command.parse
       "BUY AAPL 100 150.00 as Alice"
-      ~default
-    |> Result.map_error ~f:Error.of_string
+      ~default_participant:default
     |> ok_exn
   in
-  print_endline [%string "participant=%{req.participant#Participant}"];
+  (match cmd with
+   | Submit req ->
+     print_endline [%string "participant=%{req.participant#Participant}"]
+   | Book _ | Subscribe _ -> print_endline "unexpected command shape");
   [%expect {| participant=Alice |}]
 ;;
 
@@ -232,15 +234,15 @@ let%expect_test "format_event: all event types" =
 let%expect_test "round-trip: parse a command, submit, format result" =
   let open Jsip_test_harness in
   let t = Harness.create () in
-  (* Place a resting sell *)
   Harness.submit_
     t
     (Harness.sell ~price_cents:15000 ~participant:Harness.bob ());
-  (* Parse a buy command from text and submit it *)
   let request =
-    Exchange_command.parse "BUY AAPL 100 150.00 as Alice"
-    |> Result.map_error ~f:Error.of_string
-    |> ok_exn
+    match
+      Exchange_command.parse "BUY AAPL 100 150.00 as Alice" |> ok_exn
+    with
+    | Submit req -> req
+    | Book _ | Subscribe _ -> failwith "expected Submit"
   in
   let events = Matching_engine.submit (Harness.engine t) request in
   print_endline (Event_format.format_events events);
@@ -253,4 +255,20 @@ let%expect_test "round-trip: parse a command, submit, format result" =
     TRADE AAPL $150.00 x100
     BBO AAPL bid=- ask=-
     |}]
+;;
+
+let%expect_test "BOOK with a symbol argument" =
+  let cmd = Exchange_command.parse "BOOK AAPL" |> ok_exn in
+  (match cmd with
+   | Book symbol -> print_endline [%string "BOOK %{symbol#Symbol}"]
+   | Submit _ | Subscribe _ -> print_endline "unexpected command shape");
+  [%expect {| BOOK AAPL |}]
+;;
+
+let%expect_test "SUBSCRIBE with case-insensitive input" =
+  let cmd = Exchange_command.parse "Subscribe AAPL" |> ok_exn in
+  (match cmd with
+   | Subscribe symbol -> print_endline [%string "SUBSCRIBE %{symbol#Symbol}"]
+   | Submit _ | Book _ -> print_endline "unexpected command shape");
+  [%expect {| SUBSCRIBE AAPL |}]
 ;;

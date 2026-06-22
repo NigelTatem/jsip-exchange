@@ -22,87 +22,107 @@ type t =
   | Book of Symbol.t
   | Subscribe of Symbol.t
 
-(* Default participant when no "as <name>" is specified in the command.
-   [parse_command_with_default_participant] overrides this with the
-   caller-supplied default. *)
-let default_participant = Participant.of_string "anonymous"
-
-let parse ?default_participant line =
+let parse ?default_participant line : t Or_error.t =
+  let default_participant =
+    Option.value
+      default_participant
+      ~default:(Participant.of_string "anonymous")
+  in
   let line = String.strip line in
   if String.is_empty line
-  then Error "empty command"
+  then Or_error.error_string "empty command"
   else (
     let parts =
       String.split line ~on:' ' |> List.filter ~f:(Fn.non String.is_empty)
     in
     match parts with
-    | [] -> Error "empty command"
-    | side_str :: rest ->
-      let open Result.Let_syntax in
-      let%bind side =
-        match String.uppercase side_str with
-        | "BUY" -> Ok Side.Buy
-        | "SELL" -> Ok Side.Sell
-        | other ->
-          Error [%string "unknown command: %{other} (expected BUY or SELL)"]
+    | [] -> Or_error.error_string "empty command"
+    | verb_str :: rest ->
+      let open Or_error.Let_syntax in
+      let%bind verb =
+        match Verb.of_string verb_str with
+        | v -> Ok v
+        | exception _ -> Or_error.errorf "unknown command: %s" verb_str
       in
-      (match rest with
-       | symbol_str :: size_str :: price_str :: rest ->
-         let%bind size =
-           match Int.of_string_opt size_str with
-           | Some n when n > 0 -> Ok n
-           | Some _ -> Error "size must be positive"
-           | None -> Error [%string "invalid size: %{size_str}"]
+      (match verb with
+       | Verb.Buy | Verb.Sell ->
+         let side =
+           if Verb.equal verb Verb.Buy then Side.Buy else Side.Sell
          in
-         let%bind price =
-           try Ok (Price.of_string price_str) with
-           | exn ->
-             let exn_str = Exn.to_string exn in
-             Error
-               [%string "invalid price: %{price_str}\nexception: %{exn_str}"]
-         in
-         let%bind symbol =
-           try Ok (Symbol.of_string symbol_str) with
-           | exn ->
-             let exn_str = Exn.to_string exn in
-             Error
-               [%string
-                 "invalid symbol: %{symbol_str}\nexception: %{exn_str}"]
-         in
-         let%bind time_in_force, rest =
-           match rest with
-           | tif_str :: rest' ->
-             (match Time_in_force.of_string tif_str with
-              | tif -> Ok (tif, rest')
-              | exception _ ->
-                Error
-                  [%string
-                    "unknown time-in-force: %{tif_str} (expected \
-                     %{Time_in_force.all_str})"])
-           | [] -> Ok (Time_in_force.Day, [])
-         in
-         let%bind participant =
-           match rest with
-           | "as" :: name :: _ | "AS" :: name :: _ ->
-             Ok (Participant.of_string name)
-           | [] -> Ok (Option.value_exn default_participant)
-           | _ ->
-             let trailing = String.concat ~sep:" " rest in
-             Error [%string "unexpected trailing arguments: %{trailing}"]
-         in
-         Ok
-           (Submit
-              ({ symbol
-               ; participant
-               ; side
-               ; price
-               ; size = Size.of_int size
-               ; time_in_force
-               }
-               : Order.Request.t))
-       | _ ->
-         Error
-           [%string
-             "expected: <symbol> <size> <price> [%{Time_in_force.all_str}] \
-              [as <name>]"]))
+         (match rest with
+          | symbol_str :: size_str :: price_str :: rest ->
+            let%bind size =
+              match Int.of_string_opt size_str with
+              | Some n when n > 0 -> Ok n
+              | Some _ -> Or_error.error_string "size must be positive"
+              | None -> Or_error.errorf "invalid size: %s" size_str
+            in
+            let%bind price =
+              Or_error.try_with (fun () -> Price.of_string price_str)
+            in
+            let%bind symbol =
+              Or_error.try_with (fun () -> Symbol.of_string symbol_str)
+            in
+            let%bind time_in_force, rest =
+              match rest with
+              | tif_str :: _ when String.Caseless.equal tif_str "as" ->
+                Ok (Time_in_force.Day, rest)
+              | tif_str :: rest' ->
+                (match Time_in_force.of_string tif_str with
+                 | tif -> Ok (tif, rest')
+                 | exception _ ->
+                   Or_error.errorf
+                     "unknown time-in-force: %s (expected %s)"
+                     tif_str
+                     Time_in_force.all_str)
+              | [] -> Ok (Time_in_force.Day, [])
+            in
+            let%bind participant =
+              match rest with
+              | as_str :: name :: _ when String.Caseless.equal as_str "as" ->
+                Ok (Participant.of_string name)
+              | [] -> Ok default_participant
+              | _ ->
+                Or_error.errorf
+                  "unexpected trailing arguments: %s"
+                  (String.concat ~sep:" " rest)
+            in
+            Ok
+              (Submit
+                 ({ symbol
+                  ; participant
+                  ; side
+                  ; price
+                  ; size = Size.of_int size
+                  ; time_in_force
+                  }
+                  : Order.Request.t))
+          | _ ->
+            Or_error.errorf
+              "expected: <symbol> <size> <price> [%s] [as <name>]"
+              Time_in_force.all_str)
+       | Verb.Book ->
+         (match rest with
+          | [ symbol_str ] ->
+            let%bind symbol =
+              Or_error.try_with (fun () -> Symbol.of_string symbol_str)
+            in
+            Ok (Book symbol)
+          | [] -> Or_error.error_string "expected: BOOK <symbol>"
+          | _ ->
+            Or_error.errorf
+              "unexpected trailing arguments: %s"
+              (String.concat ~sep:" " rest))
+       | Verb.Subscribe ->
+         (match rest with
+          | [ symbol_str ] ->
+            let%bind symbol =
+              Or_error.try_with (fun () -> Symbol.of_string symbol_str)
+            in
+            Ok (Subscribe symbol)
+          | [] -> Or_error.error_string "expected: SUBSCRIBE <symbol>"
+          | _ ->
+            Or_error.errorf
+              "unexpected trailing arguments: %s"
+              (String.concat ~sep:" " rest))))
 ;;

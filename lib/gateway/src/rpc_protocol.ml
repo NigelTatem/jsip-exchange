@@ -2,6 +2,15 @@ open! Core
 open! Async
 open Jsip_types
 
+let login_rpc : (string, Participant.t Or_error.t) Rpc.Rpc.t =
+  Rpc.Rpc.create
+    ~name:"login"
+    ~version:1
+    ~bin_query:String.bin_t
+    ~bin_response:[%bin_type_class: Participant.t Or_error.t]
+    ~include_in_error_count:Only_on_exn
+;;
+
 let submit_order_rpc =
   Rpc.Rpc.create
     ~name:"submit-order"

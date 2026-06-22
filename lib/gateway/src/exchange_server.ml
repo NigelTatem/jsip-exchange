@@ -30,6 +30,12 @@ let start_matching_loop ~engine ~dispatcher request_reader =
        Dispatcher.dispatch dispatcher events))
 ;;
 
+module Connection_state = struct
+  type t = { mutable session : Session.t option }
+
+  let participant t = Option.map t.session ~f:Session.participant
+end
+
 let start ~symbols ~port () =
   let engine = Matching_engine.create symbols in
   let dispatcher = Dispatcher.create () in
@@ -41,9 +47,29 @@ let start ~symbols ~port () =
       ~implementations:
         [ Rpc.Rpc.implement
             Rpc_protocol.submit_order_rpc
-            (fun state request ->
-               ignore state;
-               handle_submit ~request_writer request)
+            (fun connection_state request ->
+               match connection_state.Connection_state.session with
+               | None -> return (Error (Error.of_string "not logged in"))
+               | Some session ->
+                 let request =
+                   { request with participant = Session.participant session }
+                 in
+                 handle_submit ~request_writer request)
+        ; Rpc.Rpc.implement
+            Rpc_protocol.login_rpc
+            (fun connection_state name ->
+               match String.strip name with
+               | "" ->
+                 return
+                   (Error
+                      (Error.of_string "participate name cannot be empty"))
+               | stripped_name ->
+                 let participant = Participant.of_string stripped_name in
+                 let%bind session =
+                   Dispatcher.set_up_session dispatcher participant
+                 in
+                 connection_state.Connection_state.session <- Some session;
+                 return (Ok part))
         ; Rpc.Rpc.implement' Rpc_protocol.book_query_rpc (fun state symbol ->
             ignore state;
             Matching_engine.book engine symbol
@@ -67,7 +93,14 @@ let start ~symbols ~port () =
   let%map tcp_server =
     Rpc.Connection.serve
       ~implementations
-      ~initial_connection_state:(fun _addr _conn -> ())
+      ~initial_connection_state:(fun _addr conn ->
+        let connection_state = { Connection_state.session = None } in
+        don't_wait_for
+          (let%bind () = Rpc.Connection.close_finished conn in
+           match connection_state.session with
+           | None -> return ()
+           | Some session -> Dispatcher.clean_up_session dispatcher session);
+        connection_state)
       ~where_to_listen:(Tcp.Where_to_listen.of_port port)
       ()
   in
