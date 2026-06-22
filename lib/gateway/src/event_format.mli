@@ -27,18 +27,6 @@
 open! Core
 open Jsip_types
 
-(** Parse a text command into an order request. Returns [Error] with a
-    human-readable message if the input is malformed. *)
-val parse_command : string -> (Order.Request.t, string) Result.t
-
-(** Like [parse_command], but uses [default] as the participant if none is
-    specified in the command text. Useful for clients that already know their
-    identity. *)
-val parse_command_with_default_participant
-  :  string
-  -> default:Participant.t
-  -> (Order.Request.t, string) Result.t
-
 (** Format an exchange event as a single line of human-readable text. *)
 val format_event : Exchange_event.t -> string
 

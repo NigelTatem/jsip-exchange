@@ -78,10 +78,10 @@ end
 
 let print_events ?(show = Show.all) events =
   List.iter events ~f:(fun event ->
-    if show event then print_endline (Protocol.format_event event))
+    if show event then print_endline (Event_format.format_event event))
 ;;
 
-let print_event event = print_endline (Protocol.format_event event)
+let print_event event = print_endline (Event_format.format_event event)
 
 let submit t request =
   let events = Matching_engine.submit t.engine request in

@@ -4,7 +4,7 @@ open Jsip_order_book
 open Jsip_gateway
 
 let print_parse line =
-  match Protocol.parse_command line with
+  match Exchange_command.parse line with
   | Error msg -> print_endline [%string "ERROR: %{msg}"]
   | Ok req -> print_endline [%string "%{req#Order.Request}"]
 ;;
@@ -123,7 +123,7 @@ let%expect_test "parse error: unknown time-in-force" =
 let%expect_test "default participant: used when none specified" =
   let default = Participant.of_string "DefaultTrader" in
   let req =
-    Protocol.parse_command_with_default_participant
+    Exchange_command.parse_command_with_default_participant
       "BUY AAPL 100 150.00"
       ~default
     |> Result.map_error ~f:Error.of_string
@@ -136,7 +136,7 @@ let%expect_test "default participant: used when none specified" =
 let%expect_test "default participant: overridden by explicit 'as'" =
   let default = Participant.of_string "DefaultTrader" in
   let req =
-    Protocol.parse_command_with_default_participant
+    Exchange_command.parse_command_with_default_participant
       "BUY AAPL 100 150.00 as Alice"
       ~default
     |> Result.map_error ~f:Error.of_string
@@ -214,7 +214,7 @@ let%expect_test "format_event: all event types" =
         }
     ]
   in
-  List.iter events ~f:(fun e -> print_endline (Protocol.format_event e));
+  List.iter events ~f:(fun e -> print_endline (Event_format.format_event e));
   [%expect
     {|
     ACCEPTED id=1 AAPL BUY 100@$150.00 DAY
@@ -238,12 +238,12 @@ let%expect_test "round-trip: parse a command, submit, format result" =
     (Harness.sell ~price_cents:15000 ~participant:Harness.bob ());
   (* Parse a buy command from text and submit it *)
   let request =
-    Protocol.parse_command "BUY AAPL 100 150.00 as Alice"
+    Exchange_command.parse "BUY AAPL 100 150.00 as Alice"
     |> Result.map_error ~f:Error.of_string
     |> ok_exn
   in
   let events = Matching_engine.submit (Harness.engine t) request in
-  print_endline (Protocol.format_events events);
+  print_endline (Event_format.format_events events);
   [%expect
     {|
     ACCEPTED id=1 AAPL SELL 100@$150.00 DAY

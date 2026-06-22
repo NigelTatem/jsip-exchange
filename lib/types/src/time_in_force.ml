@@ -13,3 +13,4 @@ type t =
   , string ~case_insensitive ~capitalize:"SCREAMING_SNAKE_CASE"]
 
 let rests_on_book = function Day -> true | Ioc -> false
+let all_str = List.map all ~f:to_string |> String.concat ~sep:"|"

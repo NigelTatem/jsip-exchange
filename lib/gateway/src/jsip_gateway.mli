@@ -5,8 +5,9 @@
     [Dispatcher] that routes matching-engine events to the right subscribers
     (per-participant session feeds, per-symbol market data, audit firehose). *)
 
-module Protocol = Protocol
+module Event_format = Event_format
 module Rpc_protocol = Rpc_protocol
 module Session = Session
 module Dispatcher = Dispatcher
 module Exchange_server = Exchange_server
+module Exchange_command = Exchange_command

@@ -81,7 +81,7 @@ module Filter = struct
   ;;
 
   let matches t event =
-    let line = Protocol.format_event event in
+    let line = Event_format.format_event event in
     List.for_all t ~f:(predicate_matches event line)
   ;;
 end
@@ -125,9 +125,11 @@ let visible_events t =
   List.rev_filter t.events_rev ~f:(Filter.matches t.filter)
 ;;
 
-let visible_lines t = List.map (visible_events t) ~f:Protocol.format_event
+let visible_lines t =
+  List.map (visible_events t) ~f:Event_format.format_event
+;;
 
 let visible_styled_lines t =
   List.map (visible_events t) ~f:(fun event ->
-    Color.of_event event, Protocol.format_event event)
+    Color.of_event event, Event_format.format_event event)
 ;;

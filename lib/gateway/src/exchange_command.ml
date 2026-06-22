@@ -1,21 +1,21 @@
 open! Core
 open Jsip_types
 
-exception ParseError of string
-
-type verb =
-  | Buy
-  | Sell
-  | Book
-  | Subscribe
-[@@deriving
-  sexp
-  , bin_io
-  , compare
-  , equal
-  , enumerate
-  , hash
-  , string ~case_insensitive ~capitalize:"SCREAMING_SNAKE_CASE"]
+module Verb = struct
+  type t =
+    | Buy
+    | Sell
+    | Book
+    | Subscribe
+  [@@deriving
+    sexp
+    , bin_io
+    , compare
+    , equal
+    , enumerate
+    , hash
+    , string ~case_insensitive ~capitalize:"SCREAMING_SNAKE_CASE"]
+end
 
 type t =
   | Submit of Order.Request.t
@@ -27,7 +27,7 @@ type t =
    caller-supplied default. *)
 let default_participant = Participant.of_string "anonymous"
 
-let parse_command line =
+let parse ?default_participant line =
   let line = String.strip line in
   if String.is_empty line
   then Error "empty command"
@@ -41,8 +41,8 @@ let parse_command line =
       let open Result.Let_syntax in
       let%bind side =
         match String.uppercase side_str with
-        | "BUY" -> Ok Verb.Buy
-        | "SELL" -> Ok Verb.Sell
+        | "BUY" -> Ok Side.Buy
+        | "SELL" -> Ok Side.Sell
         | other ->
           Error [%string "unknown command: %{other} (expected BUY or SELL)"]
       in
@@ -72,46 +72,37 @@ let parse_command line =
          let%bind time_in_force, rest =
            match rest with
            | tif_str :: rest' ->
-             (match String.uppercase tif_str with
-              | "IOC" -> Ok (Time_in_force.Ioc, rest')
-              | "DAY" -> Ok (Day, rest')
-              | "AS" -> Ok (Day, rest)
-              | _ ->
+             (match Time_in_force.of_string tif_str with
+              | tif -> Ok (tif, rest')
+              | exception _ ->
                 Error
                   [%string
-                    "unknown time-in-force: %{tif_str} (expected DAY or IOC)"])
-           | [] -> Ok (Day, [])
+                    "unknown time-in-force: %{tif_str} (expected \
+                     %{Time_in_force.all_str})"])
+           | [] -> Ok (Time_in_force.Day, [])
          in
          let%bind participant =
            match rest with
            | "as" :: name :: _ | "AS" :: name :: _ ->
              Ok (Participant.of_string name)
-           | [] -> Ok default_participant
+           | [] -> Ok (Option.value_exn default_participant)
            | _ ->
              let trailing = String.concat ~sep:" " rest in
              Error [%string "unexpected trailing arguments: %{trailing}"]
          in
          Ok
-           ({ symbol
-            ; participant
-            ; side
-            ; price
-            ; size = Size.of_int size
-            ; time_in_force
-            }
-            : Order.Request.t)
+           (Submit
+              ({ symbol
+               ; participant
+               ; side
+               ; price
+               ; size = Size.of_int size
+               ; time_in_force
+               }
+               : Order.Request.t))
        | _ ->
          Error
-           "expected: BUY|SELL <symbol> <size> <price> [DAY|IOC] [as <name>]"))
+           [%string
+             "expected: <symbol> <size> <price> [%{Time_in_force.all_str}] \
+              [as <name>]"]))
 ;;
-
-let parse_command_with_default_participant line ~default =
-  match parse_command line with
-  | Error _ as err -> err
-  | Ok request ->
-    if Participant.equal request.participant default_participant
-    then Ok { request with participant = default }
-    else Ok request
-;;
-
-let parse verb = split " "

@@ -113,7 +113,7 @@ let%expect_test "e2e: market data subscriber receives trade and BBO updates" =
     in
     don't_wait_for
       (Pipe.iter_without_pushback reader ~f:(fun event ->
-         let e = Protocol.format_event event in
+         let e = Event_format.format_event event in
          print_endline [%string "[MD Subscriber] %{e}"]));
     (* Post a sell *)
     let%bind () =
@@ -156,7 +156,7 @@ let%expect_test "e2e: subscriber only sees events for subscribed symbol" =
     in
     don't_wait_for
       (Pipe.iter_without_pushback reader ~f:(fun event ->
-         let e = Protocol.format_event event in
+         let e = Event_format.format_event event in
          print_endline [%string "[MD Subscriber] %{e}"]));
     (* Post on TSLA — subscriber should NOT see this *)
     let%bind () =
@@ -244,7 +244,7 @@ let%expect_test "e2e: audit log subscriber sees full unfiltered stream \
     in
     don't_wait_for
       (Pipe.iter_without_pushback reader ~f:(fun event ->
-         let e = Protocol.format_event event in
+         let e = Event_format.format_event event in
          print_endline [%string "[AUDIT] %{e}"]));
     (* Post a sell on AAPL — audit subscriber should see ACCEPTED and BBO. *)
     let%bind () =

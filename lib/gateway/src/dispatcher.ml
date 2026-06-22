@@ -68,7 +68,7 @@ let push_to_session t participant event =
   ignore t;
   print_endline
     [%string
-      "[for %{participant#Participant}] %{Protocol.format_event event}"]
+      "[for %{participant#Participant}] %{Event_format.format_event event}"]
 ;;
 
 let dispatch_event t (event : Exchange_event.t) =
