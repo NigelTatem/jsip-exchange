@@ -69,7 +69,7 @@ let start ~symbols ~port () =
                    Dispatcher.set_up_session dispatcher participant
                  in
                  connection_state.Connection_state.session <- Some session;
-                 return (Ok part))
+                 return (Ok participant))
         ; Rpc.Rpc.implement' Rpc_protocol.book_query_rpc (fun state symbol ->
             ignore state;
             Matching_engine.book engine symbol
