@@ -18,6 +18,7 @@ let make_request
   ; price = Price.of_int_cents price_cents
   ; size = Size.of_int size
   ; time_in_force
+  ; client_order_id = 0
   }
 ;;
 

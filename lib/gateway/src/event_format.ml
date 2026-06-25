@@ -11,7 +11,7 @@ let format_event = function
       (Size.to_int request.size)
       (Price.to_string_dollar request.price)
       (Time_in_force.to_string request.time_in_force)
-  | Fill { fill; _ } -> [%string "FILL %{fill#Fill}"]
+  | Fill fill -> [%string "FILL %{fill#Fill}"]
   | Order_cancel
       { order_id
       ; participant = _

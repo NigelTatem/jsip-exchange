@@ -114,7 +114,6 @@ let dispatch_event t (event : Exchange_event.t) =
       } ->
     push_to_session t participant event
   | Fill
-  {
       { fill_id = _
       ; symbol = _
       ; price = _
@@ -124,11 +123,9 @@ let dispatch_event t (event : Exchange_event.t) =
       ; aggressor_side = _
       ; resting_order_id = _
       ; resting_participant
-      }
-             ; aggressor_client_order_id = _
-          ; resting_client_order_id = _
-      }
-      ->
+      ; aggressor_client_order_id = _
+      ; resting_client_order_id = _
+      } ->
     push_to_session t aggressor_participant event;
     push_to_session t resting_participant event
 ;;

@@ -10,6 +10,8 @@ type t =
   ; aggressor_side : Side.t
   ; resting_order_id : Order_id.t
   ; resting_participant : Participant.t
+  ; aggressor_client_order_id : Client_order_id.t
+  ; resting_client_order_id : Client_order_id.t
   }
 [@@deriving sexp, bin_io]
 
@@ -23,11 +25,13 @@ let to_string
    ; aggressor_side
    ; resting_order_id
    ; resting_participant
+   ; aggressor_client_order_id
+   ; resting_client_order_id
    } :
     t)
   =
   sprintf
-    "fill_id=%d %s %s x%d aggressor=%s(%s) %s resting=%s(%s)"
+    "fill_id=%d %s %s x%d aggressor=%s(%s) %s %s resting=%s(%d) %d"
     fill_id
     (Symbol.to_string symbol)
     (Price.to_string_dollar price)
@@ -37,6 +41,8 @@ let to_string
     (Side.to_string aggressor_side)
     (Order_id.to_string resting_order_id)
     (Participant.to_string resting_participant)
+    (Client_order_id.to_int aggressor_client_order_id)
+    (Client_order_id.to_int resting_client_order_id)
 ;;
 
 let notional_cents t = Price.to_int_cents t.price * Size.to_int t.size

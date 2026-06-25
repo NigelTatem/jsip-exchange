@@ -5,11 +5,7 @@ type t =
       { order_id : Order_id.t
       ; request : Order.Request.t
       }
-  | Fill of
-      { fill : Fill.t
-      ; aggressor_client_order_id : Client_order_id.t
-      ; resting_client_order_id : Client_order_id.t
-      }
+  | Fill of Fill.t
   | Order_cancel of
       { order_id : Order_id.t
       ; participant : Participant.t

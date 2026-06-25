@@ -37,17 +37,15 @@ let rec match_loop ~book ~order ~fill_id =
       then Order_book.remove book (Order.order_id resting);
       let fill_event =
         Exchange_event.Fill
-          { fill =
-              { fill_id
-              ; symbol = Order.symbol order
-              ; price = Order.price resting
-              ; size = fill_size
-              ; aggressor_order_id = Order.order_id order
-              ; aggressor_participant = Order.participant order
-              ; aggressor_side = Order.side order
-              ; resting_order_id = Order.order_id resting
-              ; resting_participant = Order.participant resting
-              }
+          { fill_id
+          ; symbol = Order.symbol order
+          ; price = Order.price resting
+          ; size = fill_size
+          ; aggressor_order_id = Order.order_id order
+          ; aggressor_participant = Order.participant order
+          ; aggressor_side = Order.side order
+          ; resting_order_id = Order.order_id resting
+          ; resting_participant = Order.participant resting
           ; aggressor_client_order_id = Order.client_order_id order
           ; resting_client_order_id = Order.client_order_id resting
           }

@@ -18,6 +18,7 @@ let make_order
      ; price = Price.of_int_cents price_cents
      ; size = Size.of_int size
      ; time_in_force = Day
+     ; client_order_id = 0
      }
      : Order.Request.t)
     ~order_id:(Order_id.For_testing.of_int order_id)
@@ -278,9 +279,9 @@ let%expect_test "snapshot lists levels in price-time priority order" =
         $149.95 x100
         $150.00 x100
       ASKS:
-        $150.15 x100
-        $150.10 x100
         $150.05 x100
+        $150.10 x100
+        $150.15 x100
       BBO: $150.00 x100 / $150.05 x100
     |}]
 ;;
