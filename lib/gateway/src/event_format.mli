@@ -10,8 +10,8 @@
 
     Each command is a single line of text:
     {v
-    BUY  <symbol> <size> <price> [<time_in_force>] [as <participant>]
-    SELL <symbol> <size> <price> [<time_in_force>] [as <participant>]
+    BUY <client_id> <symbol> <size> <price> [DAY|IOC]
+    SELL <client_id> <symbol> <size> <price> [DAY|IOC]
     v}
 
     Examples:

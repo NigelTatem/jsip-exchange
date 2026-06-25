@@ -2,7 +2,7 @@ open! Core
 open! Async
 open Jsip_types
 
-let login_rpc : (string, Participant.t Or_error.t) Rpc.Rpc.t =
+let login_rpc =
   Rpc.Rpc.create
     ~name:"login"
     ~version:1
@@ -29,7 +29,7 @@ let book_query_rpc =
     ~include_in_error_count:Only_on_exn
 ;;
 
-let session_feed_rpc : (unit, Exchange_event.t, Error.t) Rpc.Pipe_rpc.t =
+let session_feed_rpc =
   Rpc.Pipe_rpc.create
     ~name:"session-feed"
     ~version:1

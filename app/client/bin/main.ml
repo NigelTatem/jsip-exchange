@@ -20,23 +20,23 @@ let run_client ~host ~port ~participant_name =
     Rpc.Rpc.dispatch_exn Rpc_protocol.login_rpc conn participant_name
   in
   let%bind result =
-            Rpc.Pipe_rpc.dispatch
-              Rpc_protocol.session_feed_rpc
-              conn
-              ()
-          in
-          (match result with
-           | Error err | Ok (Error err) ->
-             print_endline
-               [%string "ERROR subscribing: %{Error.to_string_hum err}"];
-             loop ()
-           | Ok (Ok (reader, _id)) ->
-             print_endline
-               Fill.to_participant_view ;
-             don't_wait_for
-               (Pipe.iter_without_pushback reader ~f:(fun event ->
-                  print_endline
-                    [%string "[MD] %{Event_format.format_event event}"]));)
+    Rpc.Pipe_rpc.dispatch Rpc_protocol.session_feed_rpc conn ()
+  in
+  let%bind () =
+    match result with
+    | Error err | Ok (Error err) ->
+      print_endline [%string "ERROR subscribing: %{Error.to_string_hum err}"];
+      return ()
+    | Ok (Ok (reader, _id)) ->
+      don't_wait_for
+        (Pipe.iter_without_pushback reader ~f:(fun event ->
+           match event with
+           | Exchange_event.Fill fill ->
+             (match Fill.to_participant_view fill participant with
+              | Some msg -> print_endline msg
+              | None -> print_endline (Fill.to_string fill))
+           | other -> print_endline (Event_format.format_event other)));
+      return ()
   in
   print_endline
     [%string

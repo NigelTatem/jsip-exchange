@@ -33,7 +33,7 @@ let start_matching_loop ~engine ~dispatcher request_reader =
 module Connection_state = struct
   type t = { mutable session : Session.t option }
 
-  let participant t = Option.map t.session ~f:Session.participant
+  let _participant t = Option.map t.session ~f:Session.participant
 end
 
 let start ~symbols ~port () =
@@ -55,7 +55,7 @@ let start ~symbols ~port () =
                       (Error.of_string "participate name cannot be empty"))
                | stripped_name ->
                  let participant = Participant.of_string stripped_name in
-                 let%bind session =
+                 let%bind.Deferred.Or_error session =
                    match
                      Hashtbl.mem (Dispatcher.sessions dispatcher) participant
                    with

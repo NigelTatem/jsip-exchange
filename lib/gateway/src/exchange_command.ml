@@ -50,7 +50,13 @@ let parse ?default_participant line : t Or_error.t =
            if Verb.equal verb Verb.Buy then Side.Buy else Side.Sell
          in
          (match rest with
-          | symbol_str :: size_str :: price_str :: rest ->
+          | client_id_str :: symbol_str :: size_str :: price_str :: rest ->
+            let%bind client_order_id =
+              match Int.of_string_opt client_id_str with
+              | Some n -> Ok n
+              | None ->
+                Or_error.errorf "invalid client order id: %s" client_id_str
+            in
             let%bind size =
               match Int.of_string_opt size_str with
               | Some n when n > 0 -> Ok n
@@ -95,6 +101,7 @@ let parse ?default_participant line : t Or_error.t =
                   ; price
                   ; size = Size.of_int size
                   ; time_in_force
+                  ; client_order_id
                   }
                   : Order.Request.t))
           | _ ->

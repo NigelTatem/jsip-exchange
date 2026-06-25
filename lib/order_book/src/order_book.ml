@@ -69,15 +69,24 @@ let find t order_id =
     Map.find target_map key
 ;;
 
+let best_resting_entry t side =
+  let resting_orders = side_map t side in
+  match side with
+  | Side.Sell -> Map.min_elt resting_orders
+  | Side.Buy ->
+    (match Map.max_elt resting_orders with
+     | None -> None
+     | Some ((price, _), _) ->
+       Map.closest_key
+         resting_orders
+         `Greater_or_equal_to
+         (price, Order_id.For_testing.of_int 0))
+;;
+
 let find_match t (incoming_order : Order.t) : Order.t option =
   let incoming_side = Order.side incoming_order in
   let opposite_side = Side.flip incoming_side in
-  let resting_orders = side_map t opposite_side in
-  let best_resting_entry =
-    match incoming_side with
-    | Buy -> Map.min_elt resting_orders
-    | Sell -> Map.max_elt resting_orders
-  in
+  let best_resting_entry = best_resting_entry t opposite_side in
   match best_resting_entry with
   | None -> None
   | Some (_key, resting) ->
@@ -94,13 +103,6 @@ let find_match t (incoming_order : Order.t) : Order.t option =
 let orders_on_side t side = Map.data (side_map t side)
 let is_empty t = Map.is_empty t.bids && Map.is_empty t.asks
 let count t side = Map.length (side_map t side)
-
-let best_resting_entry t side =
-  let resting_orders = side_map t side in
-  match side with
-  | Side.Buy -> Map.min_elt resting_orders
-  | Sell -> Map.max_elt resting_orders
-;;
 
 (* account for the fact that order_id may be backwards since we want lowest
    and there may be no test cases exposing this flaw *)

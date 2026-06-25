@@ -17,6 +17,7 @@ module Request : sig
     ; price : Price.t
     ; size : Size.t (** Number of shares/units. Must be positive. *)
     ; time_in_force : Time_in_force.t
+    ; client_order_id : Client_order_id.t
     }
   [@@deriving sexp, bin_io]
 
@@ -46,6 +47,7 @@ val price : t -> Price.t
 val size : t -> Size.t
 val remaining_size : t -> Size.t
 val time_in_force : t -> Time_in_force.t
+val client_order_id : t -> Client_order_id.t
 
 (** {2 Mutation}
 

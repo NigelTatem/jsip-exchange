@@ -13,7 +13,11 @@ type t =
       { order_id : Order_id.t
       ; request : Order.Request.t
       }
-  | Fill of Fill.t
+  | Fill of
+      { fill : Fill.t
+      ; aggressor_client_order_id : Client_order_id.t
+      ; resting_client_order_id : Client_order_id.t
+      }
   | Order_cancel of
       { order_id : Order_id.t
       ; participant : Participant.t
@@ -21,6 +25,7 @@ type t =
       ; remaining_size : Size.t
       (** Size that was still unfilled when the order was cancelled. *)
       ; reason : Cancel_reason.t
+      ; client_order_id : Client_order_id.t
       }
   | Order_reject of
       { request : Order.Request.t

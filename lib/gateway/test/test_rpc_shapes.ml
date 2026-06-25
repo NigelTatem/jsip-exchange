@@ -47,6 +47,21 @@ let%expect_test "login RPC" =
   return ()
 ;;
 
+let%expect_test "session feed RPC" =
+  print_s
+    [%sexp
+      (Rpc.Pipe_rpc.shapes Rpc_protocol.session_feed_rpc
+       : Async_rpc_kernel.Rpc_shapes.t)];
+  [%expect
+    {|
+      (Streaming_rpc (query 86ba5df747eec837f0b391dd49f33f9e)
+     (initial_response 86ba5df747eec837f0b391dd49f33f9e)
+     (update_response 433bb29b66b02afe94a1cd264b00ab2b)
+     (error 52966f4a49a77bfdff668e9cc61511b3))
+    |}];
+  return ()
+;;
+
 let%expect_test "book-query RPC" =
   print_s
     [%sexp
