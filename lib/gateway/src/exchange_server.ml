@@ -46,16 +46,6 @@ let start ~symbols ~port () =
     Rpc.Implementations.create_exn
       ~implementations:
         [ Rpc.Rpc.implement
-            Rpc_protocol.submit_order_rpc
-            (fun connection_state request ->
-               match connection_state.Connection_state.session with
-               | None -> return (Error (Error.of_string "not logged in"))
-               | Some session ->
-                 let request =
-                   { request with participant = Session.participant session }
-                 in
-                 handle_submit ~request_writer request)
-        ; Rpc.Rpc.implement
             Rpc_protocol.login_rpc
             (fun connection_state name ->
                match String.strip name with
@@ -66,10 +56,30 @@ let start ~symbols ~port () =
                | stripped_name ->
                  let participant = Participant.of_string stripped_name in
                  let%bind session =
-                   Dispatcher.set_up_session dispatcher participant
+                   match
+                     Hashtbl.mem (Dispatcher.sessions dispatcher) participant
+                   with
+                   | true ->
+                     return
+                       (Error
+                          (Error.of_string
+                             "participant is already in a session"))
+                   | false ->
+                     Dispatcher.set_up_session dispatcher participant
+                     |> Deferred.ok
                  in
                  connection_state.Connection_state.session <- Some session;
                  return (Ok participant))
+        ; Rpc.Rpc.implement
+            Rpc_protocol.submit_order_rpc
+            (fun connection_state request ->
+               match connection_state.Connection_state.session with
+               | None -> return (Error (Error.of_string "not logged in"))
+               | Some session ->
+                 let request =
+                   { request with participant = Session.participant session }
+                 in
+                 handle_submit ~request_writer request)
         ; Rpc.Rpc.implement' Rpc_protocol.book_query_rpc (fun state symbol ->
             ignore state;
             Matching_engine.book engine symbol
@@ -86,6 +96,12 @@ let start ~symbols ~port () =
             ignore state;
             let reader = Dispatcher.subscribe_audit dispatcher in
             return (Ok reader))
+        ; Rpc.Pipe_rpc.implement
+            Rpc_protocol.session_feed_rpc
+            (fun connection_state () ->
+               match connection_state.Connection_state.session with
+               | None -> return (Error (Error.of_string "not logged in"))
+               | Some session -> return (Ok (Session.reader session)))
         ]
       ~on_unknown_rpc:`Close_connection
       ~on_exception:Log_on_background_exn

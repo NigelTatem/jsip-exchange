@@ -12,11 +12,32 @@ open Jsip_types
 open Jsip_gateway
 
 let run_client ~host ~port ~participant_name =
-  let participant = Participant.of_string participant_name in
   let where_to_connect =
     Tcp.Where_to_connect.of_host_and_port { host; port }
   in
   let%bind conn = Rpc.Connection.client where_to_connect >>| Result.ok_exn in
+  let%bind.Deferred.Or_error participant =
+    Rpc.Rpc.dispatch_exn Rpc_protocol.login_rpc conn participant_name
+  in
+  let%bind result =
+            Rpc.Pipe_rpc.dispatch
+              Rpc_protocol.session_feed_rpc
+              conn
+              ()
+          in
+          (match result with
+           | Error err | Ok (Error err) ->
+             print_endline
+               [%string "ERROR subscribing: %{Error.to_string_hum err}"];
+             loop ()
+           | Ok (Ok (reader, _id)) ->
+             print_endline
+               Fill.to_participant_view ;
+             don't_wait_for
+               (Pipe.iter_without_pushback reader ~f:(fun event ->
+                  print_endline
+                    [%string "[MD] %{Event_format.format_event event}"]));)
+  in
   print_endline
     [%string
       {|

@@ -1,19 +1,15 @@
 open! Core
 open Jsip_types
-open Async_log_kernel.Ppx_log_syntax
 
 module OrderKey = struct
-  module T = struct
-    type t = Price.t * Order_id.t [@@deriving compare, sexp]
-  end
+  type t = Price.t * Order_id.t [@@deriving compare, sexp]
 
-  include T
-  include Comparator.Make (T)
+  include functor Comparable.Make
 end
 
 type t =
   { symbol : Symbol.t
-  ; mutable bids : Order.t Map.M(OrderKey).t
+  ; mutable bids : Order.t OrderKey.Map.t
   ; mutable asks : Order.t Map.M(OrderKey).t
   ; mutable order_ids : (Price.t * Side.t) Map.M(Order_id).t
   }
@@ -85,15 +81,19 @@ let find_match t (incoming_order : Order.t) : Order.t option =
   match best_resting_entry with
   | None -> None
   | Some (_key, resting) ->
-    if Price.is_marketable
+    (match
+       Price.is_marketable
          incoming_side
          ~price:(Order.price incoming_order)
          ~resting_price:(Order.price resting)
-    then Some resting
-    else None
+     with
+     | true -> Some resting
+     | false -> None)
 ;;
 
-let orders_on_side t side = side_map t side
+let orders_on_side t side = Map.data (side_map t side)
+let is_empty t = Map.is_empty t.bids && Map.is_empty t.asks
+let count t side = Map.length (side_map t side)
 
 let best_resting_entry t side =
   let resting_orders = side_map t side in
@@ -102,13 +102,8 @@ let best_resting_entry t side =
   | Sell -> Map.max_elt resting_orders
 ;;
 
-let best_price t side =
-  let best_resting_entry = best_resting_entry t side in
-  match best_resting_entry with
-  | None -> None
-  | Some (_key, order) -> Some (Order.price order)
-;;
-
+(* account for the fact that order_id may be backwards since we want lowest
+   and there may be no test cases exposing this flaw *)
 let best_level t side : Level.t option =
   let best_resting_entry = best_resting_entry t side in
   let current_map = side_map t side in

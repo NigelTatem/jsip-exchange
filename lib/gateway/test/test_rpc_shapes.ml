@@ -35,6 +35,18 @@ let%expect_test "submit-order RPC" =
   return ()
 ;;
 
+let%expect_test "login RPC" =
+  print_s
+    [%sexp
+      (Rpc.Rpc.shapes Rpc_protocol.login_rpc : Async_rpc_kernel.Rpc_shapes.t)];
+  [%expect
+    {|
+      (Rpc (query d9a8da25d5656b016fb4dbdc2e4197fb)
+       (response a77b3b6e3753246ce7ec1f3467c939eb))
+    |}];
+  return ()
+;;
+
 let%expect_test "book-query RPC" =
   print_s
     [%sexp

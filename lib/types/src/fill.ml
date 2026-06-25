@@ -40,3 +40,18 @@ let to_string
 ;;
 
 let notional_cents t = Price.to_int_cents t.price * Size.to_int t.size
+
+let to_participant_view (t : t) (participant : Participant.t) : string option
+  =
+  if Participant.equal t.resting_participant participant
+  then
+    Some
+      [%string
+        "You sold %{t.size#Size} %{t.symbol#Symbol} at %{t.price#Price}"]
+  else if Participant.equal t.aggressor_participant participant
+  then
+    Some
+      [%string
+        "You bought %{t.size#Size} %{t.symbol#Symbol} at %{t.price#Price}"]
+  else None
+;;

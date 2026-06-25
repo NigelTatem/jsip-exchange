@@ -29,6 +29,16 @@ let book_query_rpc =
     ~include_in_error_count:Only_on_exn
 ;;
 
+let session_feed_rpc : (unit, Exchange_event.t, Error.t) Rpc.Pipe_rpc.t =
+  Rpc.Pipe_rpc.create
+    ~name:"session-feed"
+    ~version:1
+    ~bin_query:[%bin_type_class: unit]
+    ~bin_response:Exchange_event.bin_t
+    ~bin_error:Error.bin_t
+    ()
+;;
+
 let market_data_rpc =
   Rpc.Pipe_rpc.create
     ~name:"market-data"

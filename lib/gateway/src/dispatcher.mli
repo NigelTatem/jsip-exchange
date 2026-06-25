@@ -27,6 +27,8 @@ type t
     up to real [Session] outbound pipes is a week-2 exercise. *)
 val create : unit -> t
 
+val sessions : t -> Session.t Participant.Table.t
+
 (** Subscribe to public market data for one or more [symbols]. The same pipe
     receives events for every requested symbol; the dispatcher avoids
     duplicates so a subscriber listed against multiple symbols only sees each
@@ -55,7 +57,7 @@ val subscribe_audit : t -> Exchange_event.t Pipe.Reader.t
 val dispatch : t -> Exchange_event.t list -> unit
 
 val clean_up_session : t -> Session.t -> unit Deferred.t
-val set_up_session : t -> Participant.t -> unit Deferred.t
+val set_up_session : t -> Participant.t -> Session.t Deferred.t
 
 module For_testing : sig
   val audit_subscriber_count : t -> int

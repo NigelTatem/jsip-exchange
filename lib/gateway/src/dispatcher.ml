@@ -9,6 +9,8 @@ type t =
   ; sessions : Session.t Participant.Table.t
   }
 
+let sessions t = t.sessions
+
 let create () =
   { market_data_subscribers_by_symbol = Symbol.Table.create ()
   ; audit_subscribers = Bag.create ()
