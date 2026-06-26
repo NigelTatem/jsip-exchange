@@ -46,10 +46,19 @@ let make_request
   }
 ;;
 
-let buy ~price_cents ?size ?symbol ?participant ?time_in_force () =
+let buy
+  ~price_cents
+  ?client_order_id
+  ?size
+  ?symbol
+  ?participant
+  ?time_in_force
+  ()
+  =
   make_request
     ~side:Buy
     ~price_cents
+    ?client_order_id
     ?size
     ?symbol
     ?participant
@@ -57,10 +66,19 @@ let buy ~price_cents ?size ?symbol ?participant ?time_in_force () =
     ()
 ;;
 
-let sell ~price_cents ?size ?symbol ?participant ?time_in_force () =
+let sell
+  ~price_cents
+  ?client_order_id
+  ?size
+  ?symbol
+  ?participant
+  ?time_in_force
+  ()
+  =
   make_request
     ~side:Sell
     ~price_cents
+    ?client_order_id
     ?size
     ?symbol
     ?participant

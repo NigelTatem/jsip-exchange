@@ -464,3 +464,97 @@ let%expect_test "scenario: fill IDs are globally sequential" =
     FILL fill_id=2 TSLA $200.00 x100 aggressor=4(Alice) BUY 2 resting=Charlie(0) 0
     |}]
 ;;
+
+let%expect_test "Scenario: Submit with client order ID then cancel with ID." =
+  let t = Harness.create () in
+  Harness.submit_ t (Harness.buy ~price_cents:15000 ~client_order_id:1 ());
+  [%expect {| |}];
+  let events =
+    Matching_engine.cancel
+      (Harness.engine t)
+      ~participant:Harness.alice
+      ~client_order_id:(Client_order_id.of_int 1)
+  in
+  Harness.print_events events;
+  [%expect {| |}]
+;;
+
+let%expect_test "Scenario: Submit with a duplicate client order ID." =
+  let t = Harness.create () in
+  Harness.submit_ t (Harness.buy ~price_cents:15000 ~client_order_id:1 ());
+  [%expect {| |}];
+  Harness.submit_ t (Harness.buy ~price_cents:15000 ~client_order_id:1 ());
+  [%expect {| |}]
+;;
+
+let%expect_test "Scenario: Cancel an already-filled order." =
+  let t = Harness.create () in
+  Harness.submit_ t (Harness.buy ~price_cents:15000 ~client_order_id:1 ());
+  [%expect {| |}];
+  Harness.submit_
+    t
+    (Harness.sell
+       ~price_cents:15000
+       ~client_order_id:2
+       ~participant:Harness.bob
+       ());
+  [%expect {| |}];
+  let events =
+    Matching_engine.cancel
+      (Harness.engine t)
+      ~participant:Harness.alice
+      ~client_order_id:(Client_order_id.of_int 1)
+  in
+  Harness.print_events events;
+  [%expect {| |}]
+;;
+
+let%expect_test "Scenario: Cancel a non-existent order." =
+  let t = Harness.create () in
+  let events =
+    Matching_engine.cancel
+      (Harness.engine t)
+      ~participant:Harness.alice
+      ~client_order_id:(Client_order_id.of_int 1)
+  in
+  Harness.print_events events;
+  [%expect {| |}]
+;;
+
+let%expect_test "Scenario: BBO update after cancel." =
+  let t = Harness.create () in
+  Harness.submit_ t (Harness.buy ~price_cents:15000 ~client_order_id:1 ());
+  [%expect {| |}];
+  let events =
+    Matching_engine.cancel
+      (Harness.engine t)
+      ~participant:Harness.alice
+      ~client_order_id:(Client_order_id.of_int 1)
+  in
+  Harness.print_events events;
+  [%expect {| |}];
+  Harness.print_bbo t Harness.aapl;
+  [%expect {| |}]
+;;
+
+let%expect_test "Scenario: Participants resting order hit by someone\n\
+                \   else's incoming aggressor."
+  =
+  let t = Harness.create () in
+  Harness.submit_ t (Harness.buy ~price_cents:15000 ~client_order_id:1 ());
+  [%expect {| |}];
+  Harness.submit_
+    t
+    (Harness.sell
+       ~price_cents:15000
+       ~client_order_id:2
+       ~participant:Harness.bob
+       ());
+  [%expect {| |}]
+;;
+
+(* let%expect_test "Scenario: Login required before submit or cancel." =
+
+   let%expect_test "Scenario: Two connections trying to log in with the same
+   participant name." =
+*)

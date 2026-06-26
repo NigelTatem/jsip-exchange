@@ -80,6 +80,21 @@ let start ~symbols ~port () =
                    { request with participant = Session.participant session }
                  in
                  handle_submit ~request_writer request)
+        ; Rpc.Rpc.implement
+            Rpc_protocol.cancel_order_rpc
+            (fun connection_state client_order_id ->
+               match connection_state.Connection_state.session with
+               | None -> return (Error (Error.of_string "not logged in"))
+               | Some session ->
+                 let participant = Session.participant session in
+                 let events =
+                   Matching_engine.cancel
+                     engine
+                     ~participant
+                     ~client_order_id
+                 in
+                 Dispatcher.dispatch dispatcher events;
+                 return (Ok ()))
         ; Rpc.Rpc.implement' Rpc_protocol.book_query_rpc (fun state symbol ->
             ignore state;
             Matching_engine.book engine symbol

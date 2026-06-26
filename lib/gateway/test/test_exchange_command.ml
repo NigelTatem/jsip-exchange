@@ -9,6 +9,7 @@ let print_parse line =
   | Ok (Book symbol) -> print_endline [%string "BOOK %{symbol#Symbol}"]
   | Ok (Subscribe symbol) ->
     print_endline [%string "SUBSCRIBE %{symbol#Symbol}"]
+  | Ok (Cancel _) -> print_endline "unexpected command shape"
   | Error err -> print_endline [%string "ERROR: %{Error.to_string_hum err}"]
 ;;
 
@@ -16,12 +17,14 @@ let print_parse line =
 
 let%expect_test "parse: basic buy" =
   print_parse "BUY AAPL 100 150.25";
-  [%expect {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
+  [%expect
+    {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
 ;;
 
 let%expect_test "parse: basic sell" =
   print_parse "SELL TSLA 50 200.00";
-  [%expect {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
+  [%expect
+    {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
 ;;
 
 let%expect_test "parse: case insensitive side" =
@@ -56,17 +59,20 @@ let%expect_test "parse: with TIF and participant" =
 
 let%expect_test "parse: symbol is uppercased" =
   print_parse "BUY aapl 100 150.00";
-  [%expect {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
+  [%expect
+    {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
 ;;
 
 let%expect_test "parse: extra whitespace is ignored" =
   print_parse "  BUY   AAPL   100   150.00  ";
-  [%expect {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
+  [%expect
+    {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
 ;;
 
 let%expect_test "parse: price with dollar sign" =
   print_parse "BUY AAPL 100 $150.25";
-  [%expect {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
+  [%expect
+    {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
 ;;
 
 (* --- Parse errors --- *)
@@ -109,7 +115,8 @@ let%expect_test "parse error: invalid size" =
 
 let%expect_test "parse error: invalid price" =
   print_parse "BUY AAPL 100 xyz";
-  [%expect {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
+  [%expect
+    {| ERROR: expected: <symbol> <size> <price> [DAY|IOC] [as <name>] |}]
 ;;
 
 let%expect_test "parse error: unknown time-in-force" =
@@ -128,9 +135,11 @@ let%expect_test "default participant: used when none specified" =
   (match cmd with
    | Submit req ->
      print_endline [%string "participant=%{req.participant#Participant}"]
-   | Book _ | Subscribe _ -> print_endline "unexpected command shape");
+   | Book _ | Subscribe _ | Cancel _ ->
+     print_endline "unexpected command shape");
   [%expect.unreachable]
-[@@expect.uncaught_exn {|
+[@@expect.uncaught_exn
+  {|
   (* CR expect_test_collector: This test expectation appears to contain a backtrace.
      This is strongly discouraged as backtraces are fragile.
      Please change this test to not include a backtrace. *)
@@ -154,9 +163,11 @@ let%expect_test "default participant: overridden by explicit 'as'" =
   (match cmd with
    | Submit req ->
      print_endline [%string "participant=%{req.participant#Participant}"]
-   | Book _ | Subscribe _ -> print_endline "unexpected command shape");
+   | Book _ | Subscribe _ | Cancel _ ->
+     print_endline "unexpected command shape");
   [%expect.unreachable]
-[@@expect.uncaught_exn {|
+[@@expect.uncaught_exn
+  {|
   (* CR expect_test_collector: This test expectation appears to contain a backtrace.
      This is strongly discouraged as backtraces are fragile.
      Please change this test to not include a backtrace. *)
@@ -268,12 +279,13 @@ let%expect_test "round-trip: parse a command, submit, format result" =
       Exchange_command.parse "BUY AAPL 100 150.00 as Alice" |> ok_exn
     with
     | Submit req -> req
-    | Book _ | Subscribe _ -> failwith "expected Submit"
+    | Book _ | Subscribe _ | Cancel _ -> failwith "expected Submit"
   in
   let events = Matching_engine.submit (Harness.engine t) request in
   print_endline (Event_format.format_events events);
   [%expect.unreachable]
-[@@expect.uncaught_exn {|
+[@@expect.uncaught_exn
+  {|
   (* CR expect_test_collector: This test expectation appears to contain a backtrace.
      This is strongly discouraged as backtraces are fragile.
      Please change this test to not include a backtrace. *)
@@ -295,7 +307,8 @@ let%expect_test "BOOK with a symbol argument" =
   let cmd = Exchange_command.parse "BOOK AAPL" |> ok_exn in
   (match cmd with
    | Book symbol -> print_endline [%string "BOOK %{symbol#Symbol}"]
-   | Submit _ | Subscribe _ -> print_endline "unexpected command shape");
+   | Submit _ | Subscribe _ | Cancel _ ->
+     print_endline "unexpected command shape");
   [%expect {| BOOK AAPL |}]
 ;;
 
@@ -303,6 +316,6 @@ let%expect_test "SUBSCRIBE with case-insensitive input" =
   let cmd = Exchange_command.parse "Subscribe AAPL" |> ok_exn in
   (match cmd with
    | Subscribe symbol -> print_endline [%string "SUBSCRIBE %{symbol#Symbol}"]
-   | Submit _ | Book _ -> print_endline "unexpected command shape");
+   | Submit _ | Book _ | Cancel _ -> print_endline "unexpected command shape");
   [%expect {| SUBSCRIBE AAPL |}]
 ;;

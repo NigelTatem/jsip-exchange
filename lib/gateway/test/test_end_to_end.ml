@@ -326,3 +326,30 @@ let%expect_test "dispatcher: closing a subscriber's reader removes the \
   [%expect {| ("after closing reader_b" (count 0)) |}];
   return ()
 ;;
+
+let%expect_test "Scenario: Login required before submit or cancel" =
+  with_server ~symbols:[ Harness.aapl ] (fun ~server:_ ~port ->
+    let where =
+      Tcp.Where_to_connect.of_host_and_port { host = "localhost"; port }
+    in
+    let%bind conn = Rpc.Connection.client where >>| Result.ok_exn in
+    (* Submit without login *)
+    let%bind submit_result =
+      Rpc.Rpc.dispatch_exn
+        Rpc_protocol.submit_order_rpc
+        conn
+        (Harness.buy ~price_cents:15000 ~client_order_id:1 ())
+    in
+    print_s [%sexp (submit_result : unit Or_error.t)];
+    [%expect {| |}];
+    (* Cancel without login *)
+    let%bind cancel_result =
+      Rpc.Rpc.dispatch_exn
+        Rpc_protocol.cancel_order_rpc
+        conn
+        (Client_order_id.of_int 1)
+    in
+    print_s [%sexp (cancel_result : unit Or_error.t)];
+    [%expect {| |}];
+    return ())
+;;

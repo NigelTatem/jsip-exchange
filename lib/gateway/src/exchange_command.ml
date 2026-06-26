@@ -7,6 +7,7 @@ module Verb = struct
     | Sell
     | Book
     | Subscribe
+    | Cancel
   [@@deriving
     sexp
     , bin_io
@@ -21,6 +22,7 @@ type t =
   | Submit of Order.Request.t
   | Book of Symbol.t
   | Subscribe of Symbol.t
+  | Cancel of Client_order_id.t
 
 let parse ?default_participant line : t Or_error.t =
   let default_participant =
@@ -71,8 +73,6 @@ let parse ?default_participant line : t Or_error.t =
             in
             let%bind time_in_force, rest =
               match rest with
-              | tif_str :: _ when String.Caseless.equal tif_str "as" ->
-                Ok (Time_in_force.Day, rest)
               | tif_str :: rest' ->
                 (match Time_in_force.of_string tif_str with
                  | tif -> Ok (tif, rest')
@@ -85,8 +85,6 @@ let parse ?default_participant line : t Or_error.t =
             in
             let%bind participant =
               match rest with
-              | as_str :: name :: _ when String.Caseless.equal as_str "as" ->
-                Ok (Participant.of_string name)
               | [] -> Ok default_participant
               | _ ->
                 Or_error.errorf
@@ -128,6 +126,20 @@ let parse ?default_participant line : t Or_error.t =
             in
             Ok (Subscribe symbol)
           | [] -> Or_error.error_string "expected: SUBSCRIBE <symbol>"
+          | _ ->
+            Or_error.errorf
+              "unexpected trailing arguments: %s"
+              (String.concat ~sep:" " rest))
+       | Verb.Cancel ->
+         (match rest with
+          | [ id_str ] ->
+            let%bind client_order_id =
+              match Int.of_string_opt id_str with
+              | Some n -> Ok (Client_order_id.of_int n)
+              | None -> Or_error.errorf "invalid client order id: %s" id_str
+            in
+            Ok (Cancel client_order_id)
+          | [] -> Or_error.error_string "expected: CANCEL <client_order_id>"
           | _ ->
             Or_error.errorf
               "unexpected trailing arguments: %s"

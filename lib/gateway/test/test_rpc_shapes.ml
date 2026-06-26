@@ -35,6 +35,17 @@ let%expect_test "submit-order RPC" =
   return ()
 ;;
 
+let%expect_test "cancel-order RPC" =
+  print_s
+    [%sexp
+      (Rpc.Rpc.shapes Rpc_protocol.cancel_order_rpc
+       : Async_rpc_kernel.Rpc_shapes.t)];
+  [%expect {|
+
+    |}];
+  return ()
+;;
+
 let%expect_test "login RPC" =
   print_s
     [%sexp
