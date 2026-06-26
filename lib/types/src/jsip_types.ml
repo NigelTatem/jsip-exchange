@@ -1,5 +1,6 @@
 module Bbo = Bbo
 module Book = Book
+module Client_order_id = Client_order_id
 module Cancel_reason = Cancel_reason
 module Exchange_event = Exchange_event
 module Fill = Fill

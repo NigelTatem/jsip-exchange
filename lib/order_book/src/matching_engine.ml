@@ -1,10 +1,22 @@
 open! Core
 open Jsip_types
 
+(* could make this into its own module if neccessary *)
+module Client_id_key = struct
+  module T = struct
+    type t = Participant.t * Client_order_id.t
+    [@@deriving sexp, compare, hash]
+  end
+
+  include T
+  include Hashable.Make (T)
+end
+
 type t =
   { books : Order_book.t Symbol.Map.t
   ; order_id_gen : Order_id.Generator.t
   ; mutable next_fill_id : int
+  ; used_client_ids : (Participant.t * Client_order_id.t) Hash_set.t
   }
 [@@deriving sexp_of]
 
@@ -13,7 +25,11 @@ let create symbols =
     List.map symbols ~f:(fun sym -> sym, Order_book.create sym)
     |> Symbol.Map.of_alist_exn
   in
-  { books; order_id_gen = Order_id.Generator.create (); next_fill_id = 1 }
+  { books
+  ; order_id_gen = Order_id.Generator.create ()
+  ; next_fill_id = 1
+  ; used_client_ids = Client_id_key.Hash_set.create ()
+  }
 ;;
 
 let book t symbol = Map.find t.books symbol
@@ -68,45 +84,57 @@ let submit t (request : Order.Request.t) =
   | None ->
     [ Exchange_event.Order_reject { request; reason = "unknown symbol" } ]
   | Some book ->
-    let order_id = Order_id.Generator.next t.order_id_gen in
-    let order = Order.create request ~order_id in
-    let accepted = Exchange_event.Order_accept { order_id; request } in
-    (* Snapshot BBO before matching so we can detect changes. *)
-    let bbo_before = Order_book.best_bid_offer book in
-    (* Match *)
-    let fill_events, next_fill_id =
-      match_loop ~book ~order ~fill_id:t.next_fill_id
-    in
-    t.next_fill_id <- next_fill_id;
-    (* Post-match: rest on book or cancel unfilled remainder. *)
-    let post_events =
-      if Size.( > ) (Order.remaining_size order) Size.zero
-      then (
-        match Order.time_in_force order with
-        | Day ->
-          Order_book.add book order;
-          []
-        | Ioc ->
-          [ Exchange_event.Order_cancel
-              { order_id
-              ; participant = Order.participant order
-              ; symbol = Order.symbol order
-              ; remaining_size = Order.remaining_size order
-              ; reason = Ioc_remainder
-              ; client_order_id = request.client_order_id
-              }
-          ])
-      else []
-    in
-    (* Emit BBO update if the best bid or ask changed. *)
-    let bbo_after = Order_book.best_bid_offer book in
-    let bbo_events =
-      if Bbo.equal bbo_before bbo_after
-      then []
-      else
-        [ Exchange_event.Best_bid_offer_update
-            { symbol = Order.symbol order; bbo = bbo_after }
-        ]
-    in
-    List.concat [ [ accepted ]; fill_events; post_events; bbo_events ]
+    let key = request.participant, request.client_order_id in
+    if Hash_set.mem t.used_client_ids key
+    then
+      [ Exchange_event.Order_reject
+          { request; reason = "duplicate client order id" }
+      ]
+    else (
+      Hash_set.add t.used_client_ids key;
+      let order_id = Order_id.Generator.next t.order_id_gen in
+      (* some function here checking if the id already exists what it
+         currently does is: generate id for our system for the time of the
+         order submitted, but we also are have to use the new client-order-id
+         in order to prevent clients from using the same *)
+      let order = Order.create request ~order_id in
+      let accepted = Exchange_event.Order_accept { order_id; request } in
+      (* Snapshot BBO before matching so we can detect changes. *)
+      let bbo_before = Order_book.best_bid_offer book in
+      (* Match *)
+      let fill_events, next_fill_id =
+        match_loop ~book ~order ~fill_id:t.next_fill_id
+      in
+      t.next_fill_id <- next_fill_id;
+      (* Post-match: rest on book or cancel unfilled remainder. *)
+      let post_events =
+        if Size.( > ) (Order.remaining_size order) Size.zero
+        then (
+          match Order.time_in_force order with
+          | Day ->
+            Order_book.add book order;
+            []
+          | Ioc ->
+            [ Exchange_event.Order_cancel
+                { order_id
+                ; participant = Order.participant order
+                ; symbol = Order.symbol order
+                ; remaining_size = Order.remaining_size order
+                ; reason = Ioc_remainder
+                ; client_order_id = request.client_order_id
+                }
+            ])
+        else []
+      in
+      (* Emit BBO update if the best bid or ask changed. *)
+      let bbo_after = Order_book.best_bid_offer book in
+      let bbo_events =
+        if Bbo.equal bbo_before bbo_after
+        then []
+        else
+          [ Exchange_event.Best_bid_offer_update
+              { symbol = Order.symbol order; bbo = bbo_after }
+          ]
+      in
+      List.concat [ [ accepted ]; fill_events; post_events; bbo_events ])
 ;;
