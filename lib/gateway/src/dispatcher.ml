@@ -128,6 +128,8 @@ let dispatch_event t (event : Exchange_event.t) =
       } ->
     push_to_session t aggressor_participant event;
     push_to_session t resting_participant event
+  | Cancel_reject { participant; client_order_id = _; reason = _ } ->
+    push_to_session t participant event
 ;;
 
 let dispatch t events = List.iter events ~f:(dispatch_event t)
