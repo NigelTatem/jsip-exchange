@@ -37,3 +37,20 @@ end
     matching-engine response (acceptance, fills, rejection) arrives on the
     participant's session feed. *)
 val seed_book : Config.t -> Rpc.Connection.t -> unit Deferred.t
+
+(* returns a never-determined Deferred.t (i.e., Deferred.never). Internally
+   it seeds the initial ladder, subscribes to the session feed, and reacts to
+   fills by cancelling resting orders and re-posting. *)
+val run : Config.t -> Rpc.Connection.t -> unit Deferred.t
+
+type state
+
+module Order_info : sig
+  type t =
+    { side : Side.t
+    ; mutable remaining : int
+    }
+end
+
+val create_state : unit -> state
+val handle_event : state -> Exchange_event.t -> unit

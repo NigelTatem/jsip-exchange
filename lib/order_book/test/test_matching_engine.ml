@@ -552,9 +552,3 @@ let%expect_test "Scenario: Participants resting order hit by someone\n\
        ());
   [%expect {| |}]
 ;;
-
-(* let%expect_test "Scenario: Login required before submit or cancel." =
-
-   let%expect_test "Scenario: Two connections trying to log in with the same
-   participant name." =
-*)
