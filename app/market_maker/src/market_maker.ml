@@ -66,9 +66,13 @@ let submit_order conn (config : Config.t) ~side ~price ~client_order_id =
 ;;
 
 let submit_ladder conn config state =
+  let skewed_fair =
+    config.Config.fair_value_cents
+    - (state.inventory * config.inventory_skew_cents_per_share)
+  in
   Deferred.List.iter
     ~how:`Parallel
-    (List.init config.Config.num_levels ~f:Fn.id)
+    (List.init config.num_levels ~f:Fn.id)
     ~f:(fun level ->
       let offset = config.half_spread_cents + level in
       let%bind () =
@@ -76,39 +80,14 @@ let submit_ladder conn config state =
           conn
           config
           ~side:Buy
-          ~price:(Price.of_int_cents (config.fair_value_cents - offset))
+          ~price:(Price.of_int_cents (skewed_fair - offset))
           ~client_order_id:(fresh_id state)
       in
       submit_order
         conn
         config
         ~side:Sell
-        ~price:(Price.of_int_cents (config.fair_value_cents + offset))
-        ~client_order_id:(fresh_id state))
-;;
-
-let submit_ladder conn config state =
-  Deferred.List.iter
-    ~how:`Parallel
-    (List.init config.Config.num_levels ~f:Fn.id)
-    ~f:(fun level ->
-      let skewed_fair =
-        config.fair_value_cents
-        - (state.inventory * config.inventory_skew_cents_per_share)
-      in
-      let%bind () =
-        submit_order
-          conn
-          config
-          ~side:Buy
-          ~price:(Price.of_int_cents (config.fair_value_cents - skewed_fair))
-          ~client_order_id:(fresh_id state)
-      in
-      submit_order
-        conn
-        config
-        ~side:Sell
-        ~price:(Price.of_int_cents (config.fair_value_cents + skewed_fair))
+        ~price:(Price.of_int_cents (skewed_fair + offset))
         ~client_order_id:(fresh_id state))
 ;;
 
