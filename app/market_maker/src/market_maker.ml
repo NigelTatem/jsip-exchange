@@ -11,6 +11,7 @@ module Config = struct
     ; half_spread_cents : int
     ; size_per_level : int
     ; num_levels : int
+    ; inventory_skew_cents_per_share : int
     }
   [@@deriving sexp_of]
 end
@@ -77,15 +78,38 @@ let submit_ladder conn config state =
           ~side:Buy
           ~price:(Price.of_int_cents (config.fair_value_cents - offset))
           ~client_order_id:(fresh_id state)
-      and () =
+      in
+      submit_order
+        conn
+        config
+        ~side:Sell
+        ~price:(Price.of_int_cents (config.fair_value_cents + offset))
+        ~client_order_id:(fresh_id state))
+;;
+
+let submit_ladder conn config state =
+  Deferred.List.iter
+    ~how:`Parallel
+    (List.init config.Config.num_levels ~f:Fn.id)
+    ~f:(fun level ->
+      let skewed_fair =
+        config.fair_value_cents
+        - (state.inventory * config.inventory_skew_cents_per_share)
+      in
+      let%bind () =
         submit_order
           conn
           config
-          ~side:Sell
-          ~price:(Price.of_int_cents (config.fair_value_cents + offset))
+          ~side:Buy
+          ~price:(Price.of_int_cents (config.fair_value_cents - skewed_fair))
           ~client_order_id:(fresh_id state)
       in
-      Deferred.unit)
+      submit_order
+        conn
+        config
+        ~side:Sell
+        ~price:(Price.of_int_cents (config.fair_value_cents + skewed_fair))
+        ~client_order_id:(fresh_id state))
 ;;
 
 let handle_fill_side state ~fill_size ~client_order_id =
@@ -100,6 +124,7 @@ let handle_fill_side state ~fill_size ~client_order_id =
     then Hashtbl.remove state.outstanding client_order_id
 ;;
 
+(* Unfinished *)
 let handle_event state (event : Exchange_event.t) =
   match event with
   | Order_accept { request; _ } ->
@@ -160,12 +185,10 @@ let seed_book (config : Config.t) conn =
         submit
           ~side:Buy
           ~price:(Price.of_int_cents (config.fair_value_cents - offset))
-      and () =
-        submit
-          ~side:Sell
-          ~price:(Price.of_int_cents (config.fair_value_cents + offset))
       in
-      Deferred.unit)
+      submit
+        ~side:Sell
+        ~price:(Price.of_int_cents (config.fair_value_cents + offset)))
 ;;
 
 let cancel_all_outstanding conn state =
@@ -175,7 +198,7 @@ let cancel_all_outstanding conn state =
       Rpc.Rpc.dispatch_exn Rpc_protocol.cancel_order_rpc conn client_order_id
     with
     | Ok () -> ()
-    | Error _err -> (* already filled or cancelled — ignore *) ())
+    | Error _err -> ())
 ;;
 
 let run (config : Config.t) (conn : Rpc.Connection.t) : unit Deferred.t =

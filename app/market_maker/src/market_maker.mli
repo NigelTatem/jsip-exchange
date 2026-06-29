@@ -26,6 +26,7 @@ module Config : sig
     ; num_levels : int
     (** Number of price levels on each side. The bot places orders at
         [fair_value +/- spread], [fair_value +/- (spread + tick)], etc. *)
+    ; inventory_skew_cents_per_share : int
     }
   [@@deriving sexp_of]
 end
