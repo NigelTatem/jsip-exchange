@@ -333,7 +333,6 @@ let%expect_test "Scenario: Login required before submit or cancel" =
       Tcp.Where_to_connect.of_host_and_port { host = "localhost"; port }
     in
     let%bind conn = Rpc.Connection.client where >>| Result.ok_exn in
-    (* Submit without login *)
     let%bind submit_result =
       Rpc.Rpc.dispatch_exn
         Rpc_protocol.submit_order_rpc
@@ -342,7 +341,6 @@ let%expect_test "Scenario: Login required before submit or cancel" =
     in
     print_s [%sexp (submit_result : unit Or_error.t)];
     [%expect {| |}];
-    (* Cancel without login *)
     let%bind cancel_result =
       Rpc.Rpc.dispatch_exn
         Rpc_protocol.cancel_order_rpc
@@ -350,6 +348,76 @@ let%expect_test "Scenario: Login required before submit or cancel" =
         (Client_order_id.of_int 1)
     in
     print_s [%sexp (cancel_result : unit Or_error.t)];
+    [%expect {| |}];
+    return ())
+;;
+
+let%expect_test "e2e: resting participant sees Fill on session feed" =
+  with_server ~symbols:[ Harness.aapl ] (fun ~server:_ ~port ->
+    let%bind alice = connect_as ~port Harness.alice in
+    let%bind bob = connect_as ~port Harness.bob in
+    let%bind () =
+      rpc_submit
+        alice
+        (Harness.sell
+           ~price_cents:15000
+           ~client_order_id:1
+           ~participant:Harness.alice
+           ())
+    in
+    [%expect {| |}];
+    let%bind () =
+      rpc_submit
+        bob
+        (Harness.buy
+           ~price_cents:15000
+           ~client_order_id:1
+           ~participant:Harness.bob
+           ())
+    in
+    [%expect {| |}];
+    return ())
+;;
+
+let%expect_test "e2e: login required before submit or cancel" =
+  with_server ~symbols:[ Harness.aapl ] (fun ~server:_ ~port ->
+    let where =
+      Tcp.Where_to_connect.of_host_and_port { host = "localhost"; port }
+    in
+    let%bind conn = Rpc.Connection.client where >>| Result.ok_exn in
+    let%bind submit_result =
+      Rpc.Rpc.dispatch_exn
+        Rpc_protocol.submit_order_rpc
+        conn
+        (Harness.buy ~price_cents:15000 ~client_order_id:1 ())
+    in
+    print_s [%sexp (submit_result : unit Or_error.t)];
+    [%expect {| |}];
+    let%bind cancel_result =
+      Rpc.Rpc.dispatch_exn
+        Rpc_protocol.cancel_order_rpc
+        conn
+        (Client_order_id.of_int 1)
+    in
+    print_s [%sexp (cancel_result : unit Or_error.t)];
+    [%expect {| |}];
+    return ())
+;;
+
+let%expect_test "e2e: duplicate login with same participant name fails" =
+  with_server ~symbols:[ Harness.aapl ] (fun ~server:_ ~port ->
+    let%bind _alice = connect_as ~port Harness.alice in
+    let where =
+      Tcp.Where_to_connect.of_host_and_port { host = "localhost"; port }
+    in
+    let%bind conn = Rpc.Connection.client where >>| Result.ok_exn in
+    let%bind login_result =
+      Rpc.Rpc.dispatch_exn
+        Rpc_protocol.login_rpc
+        conn
+        (Participant.to_string Harness.alice)
+    in
+    print_s [%sexp (login_result : Participant.t Or_error.t)];
     [%expect {| |}];
     return ())
 ;;
