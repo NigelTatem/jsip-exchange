@@ -1,6 +1,7 @@
 open! Core
 open! Async
-open Jsip_types
+open! Jsip_types
+open! Jsip_gateway
 module Fundamental_oracle = Jsip_fundamental.Fundamental_oracle
 
 module Context = struct
@@ -9,14 +10,14 @@ module Context = struct
     ; oracle : Fundamental_oracle.t
     ; rng : Splittable_random.t
     ; dispatch_submit : Order.Request.t -> unit Deferred.Or_error.t
-    ; dispatch_cancel : Order_id.t -> unit Deferred.Or_error.t
+    ; dispatch_cancel : Client_order_id.t -> unit Deferred.Or_error.t
     }
 
   let participant t = t.participant
   let fundamental t symbol = Fundamental_oracle.price t.oracle symbol
   let random t = t.rng
   let submit t request = t.dispatch_submit request
-  let cancel t order_id = t.dispatch_cancel order_id
+  let cancel t client_order_id = t.dispatch_cancel client_order_id
 end
 
 module type Bot = sig
@@ -53,20 +54,15 @@ let create
   (type cfg)
   (bot_module : (module Bot with type Config.t = cfg))
   (config : cfg)
+  ~dispatch_submit
+  ~dispatch_cancel
   ~participant
   ~oracle
   ~rng
-  ~submit
-  ~cancel
   ~tick_interval
   =
   let context : Context.t =
-    { participant
-    ; oracle
-    ; rng
-    ; dispatch_submit = submit
-    ; dispatch_cancel = cancel
-    }
+    { participant; oracle; rng; dispatch_submit; dispatch_cancel }
   in
   { context; bot = Packed { bot = bot_module; config }; tick_interval }
 ;;

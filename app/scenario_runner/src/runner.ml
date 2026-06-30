@@ -21,12 +21,11 @@ let start_bot ~where_to_connect ~oracle (Bot_spec.T spec) =
   let submit request =
     Rpc.Rpc.dispatch_exn Rpc_protocol.submit_order_rpc connection request
   in
-  let cancel order_id =
-    return
-      (Or_error.error_s
-         [%message
-           "Scenario runner: cancel RPC not implemented yet"
-             (order_id : Order_id.t)])
+  let cancel (client_order_id : Client_order_id.t) =
+    Rpc.Rpc.dispatch_exn
+      Rpc_protocol.cancel_order_rpc
+      connection
+      client_order_id
   in
   let bot =
     Bot_runtime.create
@@ -35,33 +34,33 @@ let start_bot ~where_to_connect ~oracle (Bot_spec.T spec) =
       ~participant:spec.participant
       ~oracle
       ~rng:(Splittable_random.of_int spec.rng_seed)
-      ~submit
-      ~cancel
+      ~dispatch_submit:submit
+      ~dispatch_cancel:cancel
       ~tick_interval:spec.tick_interval
   in
-  let%bind () =
-    match spec.is_marketdata_consumer with
-    | false -> return ()
-    | true ->
-      let%bind md_pipe, metadata =
-        Rpc.Pipe_rpc.dispatch_exn
-          Rpc_protocol.market_data_rpc
-          connection
-          spec.symbols
-      in
-      don't_wait_for
-        (let%bind () = Pipe.iter md_pipe ~f:(Bot_runtime.feed_event bot) in
-         match%map Rpc.Pipe_rpc.close_reason metadata with
-         | Rpc.Pipe_close_reason.Closed_locally
-         | Rpc.Pipe_close_reason.Closed_remotely ->
-           ()
-         | Rpc.Pipe_close_reason.Error err ->
-           [%log.error "marketdata pipe closed with error" (err : Error.t)]);
-      return ()
+  let%bind _participant =
+    Rpc.Rpc.dispatch_exn
+      Rpc_protocol.login_rpc
+      connection
+      (Participant.to_string (Bot_runtime.participant bot))
   in
   print_endline
     [%string "[scenario] starting bot %{spec.participant#Participant}"];
   don't_wait_for (Bot_runtime.start bot);
+  let%bind market_data_feed, _md_metadata =
+    Rpc.Pipe_rpc.dispatch_exn
+      Rpc_protocol.market_data_rpc
+      connection
+      spec.symbols
+  in
+  let%bind session_feed, _sess_metadata =
+    Rpc.Pipe_rpc.dispatch_exn Rpc_protocol.session_feed_rpc connection ()
+  in
+  let combined_feed = Pipe.interleave [ session_feed; market_data_feed ] in
+  let%bind () =
+    Pipe.iter combined_feed ~f:(fun event ->
+      Bot_runtime.feed_event bot event)
+  in
   return ()
 ;;
 

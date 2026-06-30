@@ -13,6 +13,7 @@ let default_config : Market_maker.Config.t =
   ; half_spread_cents = 10
   ; size_per_level = 100
   ; num_levels = 3
+  ; inventory_skew_cents_per_share = 0
   }
 ;;
 

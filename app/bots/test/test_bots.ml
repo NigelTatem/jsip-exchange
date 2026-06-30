@@ -50,8 +50,8 @@ let make_recording_bot
       ~participant:alice
       ~oracle
       ~rng:(Splittable_random.of_int 7)
-      ~submit
-      ~cancel
+      ~dispatch_submit:submit
+      ~dispatch_cancel:cancel
       ~tick_interval:(Time_ns.Span.of_sec 1.0)
   in
   bot, submitted, cancelled
@@ -105,5 +105,65 @@ let%expect_test "make_recording_bot wires up a runnable bot" =
   in
   print_submitted submitted;
   [%expect {| |}];
+  return ()
+;;
+
+let%expect_test "Market_maker_bot seeds ladder and skews quotes after a fill"
+  =
+  let config =
+    Market_maker_bot.create_config
+      ~symbol:aapl
+      ~half_spread_cents:5
+      ~size_per_level:10
+      ~num_levels:2
+      ~inventory_skew_cents_per_share:2
+  in
+  let bot, submitted, cancelled =
+    make_recording_bot
+      (module Market_maker_bot)
+      config
+      ~initial_price_cents:10000
+      ()
+  in
+  let ctx = Bot_runtime.For_testing.context_of bot in
+  let%bind () = Market_maker_bot.on_start config ctx in
+  print_endline "=== Initial Seed Ladder ===";
+  print_submitted submitted;
+  [%expect
+    {|
+    === Initial Seed Ladder ===
+    Buy AAPL 10@$99.95 Day
+    Sell AAPL 10@$100.05 Day
+    Buy AAPL 10@$99.94 Day
+    Sell AAPL 10@$100.06 Day
+  |}];
+  submitted := [];
+  cancelled := [];
+  let mock_fill =
+    Exchange_event.Fill
+      { symbol = aapl
+      ; size = Size.of_int 10
+      ; price = Price.of_int_cents 9995
+      ; aggressor_client_order_id = 0
+      ; resting_client_order_id = 999
+      ; fill_id = 1
+      ; aggressor_order_id = Order_id.For_testing.of_int 101
+      ; aggressor_participant = Participant.of_string "AGGRESSOR"
+      ; aggressor_side = Side.Buy
+      ; resting_order_id = Order_id.For_testing.of_int 202
+      ; resting_participant = alice
+      }
+  in
+  let%bind () = Bot_runtime.feed_event bot mock_fill in
+  print_endline "=== Post-Fill Skewed Ladder ===";
+  print_submitted submitted;
+  [%expect
+    {|
+    === Post-Fill Skewed Ladder ===
+    Buy AAPL 10@$99.75 Day
+    Sell AAPL 10@$99.85 Day
+    Buy AAPL 10@$99.74 Day
+    Sell AAPL 10@$99.86 Day
+  |}];
   return ()
 ;;
