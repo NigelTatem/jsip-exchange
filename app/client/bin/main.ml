@@ -42,12 +42,13 @@ let run_client ~host ~port ~participant_name =
     [%string
       {|
 Connected to exchange at %{host}:%{port#Int} as %{participant#Participant}
-Commands: BUY|SELL <symbol> <size> <price> %{Time_in_force.all_str}
+Commands: BUY|SELL <client_id> <symbol> <size> <price> [%{Time_in_force.all_str}]
+          CANCEL <client_id>
           BOOK <symbol>
           SUBSCRIBE <symbol>  (stream market data)
 
-Order acknowledgements, fills, and cancellations are temporarily printed
-by the server process; the SUBSCRIBE command attaches you to a per-symbol
+Your order acknowledgements, fills, and cancellations stream in below;
+the SUBSCRIBE command additionally attaches you to a per-symbol
 market-data feed.|}];
   let rec loop () =
     print_string "> ";

@@ -132,11 +132,11 @@ let%expect_test "Market_maker_bot seeds ladder and skews quotes after a fill"
   [%expect
     {|
     === Initial Seed Ladder ===
-    Buy AAPL 10@$99.95 Day
-    Sell AAPL 10@$100.05 Day
-    Buy AAPL 10@$99.94 Day
-    Sell AAPL 10@$100.06 Day
-  |}];
+    BUY AAPL 10@$99.95 DAY
+    BUY AAPL 10@$99.94 DAY
+    SELL AAPL 10@$100.05 DAY
+    SELL AAPL 10@$100.06 DAY
+    |}];
   submitted := [];
   cancelled := [];
   let mock_fill =
@@ -160,10 +160,10 @@ let%expect_test "Market_maker_bot seeds ladder and skews quotes after a fill"
   [%expect
     {|
     === Post-Fill Skewed Ladder ===
-    Buy AAPL 10@$99.75 Day
-    Sell AAPL 10@$99.85 Day
-    Buy AAPL 10@$99.74 Day
-    Sell AAPL 10@$99.86 Day
-  |}];
+    BUY AAPL 10@$99.75 DAY
+    BUY AAPL 10@$99.74 DAY
+    SELL AAPL 10@$99.85 DAY
+    SELL AAPL 10@$99.86 DAY
+    |}];
   return ()
 ;;

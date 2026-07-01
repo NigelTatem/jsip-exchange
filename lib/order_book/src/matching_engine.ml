@@ -37,7 +37,7 @@ let book t symbol = Map.find t.books symbol
 (** Run the matching loop: repeatedly find a compatible resting order and
     fill against it. Returns the list of Fill and Trade_report events
     produced, and the next fill_id to use. *)
-let rec match_loop ~book ~order ~fill_id =
+let rec match_loop ~used_client_ids ~book ~order ~fill_id =
   if Size.( <= ) (Order.remaining_size order) Size.zero
   then [], fill_id
   else (
@@ -50,7 +50,11 @@ let rec match_loop ~book ~order ~fill_id =
       Order.fill order ~by:fill_size;
       Order.fill resting ~by:fill_size;
       if Order.is_fully_filled resting
-      then Order_book.remove book (Order.order_id resting);
+      then (
+        Order_book.remove book (Order.order_id resting);
+        Hashtbl.remove
+          used_client_ids
+          (Order.participant resting, Order.client_order_id resting));
       let fill_event =
         Exchange_event.Fill
           { fill_id
@@ -74,7 +78,7 @@ let rec match_loop ~book ~order ~fill_id =
           }
       in
       let remaining_events, next_fill_id =
-        match_loop ~book ~order ~fill_id:(fill_id + 1)
+        match_loop ~used_client_ids ~book ~order ~fill_id:(fill_id + 1)
       in
       fill_event :: trade_event :: remaining_events, next_fill_id)
 ;;
@@ -95,10 +99,6 @@ let submit t (request : Order.Request.t) =
        ]
      | None ->
        let order_id = Order_id.Generator.next t.order_id_gen in
-       (* some function here checking if the id already exists what it
-          currently does is: generate id for our system for the time of the
-          order submitted, but we also are have to use the new
-          client-order-id in order to prevent clients from using the same *)
        let order = Order.create request ~order_id in
        Hashtbl.set
          t.used_client_ids
@@ -109,7 +109,11 @@ let submit t (request : Order.Request.t) =
        let bbo_before = Order_book.best_bid_offer book in
        (* Match *)
        let fill_events, next_fill_id =
-         match_loop ~book ~order ~fill_id:t.next_fill_id
+         match_loop
+           ~used_client_ids:t.used_client_ids
+           ~book
+           ~order
+           ~fill_id:t.next_fill_id
        in
        t.next_fill_id <- next_fill_id;
        (* Post-match: rest on book or cancel unfilled remainder. *)
@@ -142,6 +146,16 @@ let submit t (request : Order.Request.t) =
                { symbol = Order.symbol order; bbo = bbo_after }
            ]
        in
+       (* An order holds its client-order-id slot only while it is live. Free
+          the slot if it did not come to rest (fully filled, or IOC remainder
+          cancelled) so the id can be reused. *)
+       if not
+            (Size.( > ) (Order.remaining_size order) Size.zero
+             && Time_in_force.rests_on_book (Order.time_in_force order))
+       then
+         Hashtbl.remove
+           t.used_client_ids
+           (request.participant, request.client_order_id);
        List.concat [ [ accepted ]; fill_events; post_events; bbo_events ])
 ;;
 
@@ -163,6 +177,7 @@ let cancel t ~participant ~client_order_id =
      | Some _active_order ->
        let bbo_before = Order_book.best_bid_offer book in
        Order_book.remove book order_id;
+       Hashtbl.remove t.used_client_ids (participant, client_order_id);
        let cancel_event =
          Exchange_event.Order_cancel
            { order_id

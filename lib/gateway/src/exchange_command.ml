@@ -104,7 +104,7 @@ let parse ?default_participant line : t Or_error.t =
                   : Order.Request.t))
           | _ ->
             Or_error.errorf
-              "expected: <symbol> <size> <price> [%s] [as <name>]"
+              "expected: <client_id> <symbol> <size> <price> [%s]"
               Time_in_force.all_str)
        | Verb.Book ->
          (match rest with

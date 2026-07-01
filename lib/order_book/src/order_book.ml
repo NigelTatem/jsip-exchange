@@ -135,7 +135,18 @@ let best_bid_offer t : Bbo.t =
 ;;
 
 let snapshot_side t (side : Side.t) =
-  side_map t side |> Map.data |> List.map ~f:Level.of_order
+  (* The map is keyed ascending by [(price, order_id)] for matching, but the
+     book is displayed best-first: bids highest-price-first, asks
+     lowest-price-first. *)
+  let compare =
+    match side with
+    | Buy -> Comparable.reverse Level.compare
+    | Sell -> Level.compare
+  in
+  side_map t side
+  |> Map.data
+  |> List.map ~f:Level.of_order
+  |> List.sort ~compare
 ;;
 
 let snapshot t =

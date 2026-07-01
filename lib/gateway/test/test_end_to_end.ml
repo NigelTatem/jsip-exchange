@@ -173,7 +173,11 @@ let%expect_test "e2e: subscriber only sees events for subscribed symbol" =
     let%bind () =
       rpc_submit
         bob
-        (Harness.sell ~price_cents:15000 ~participant:Harness.bob ())
+        (Harness.sell
+           ~price_cents:15000
+           ~participant:Harness.bob
+           ~client_order_id:1
+           ())
     in
     [%expect
       {|
@@ -200,6 +204,7 @@ let%expect_test "e2e: many clients submit orders concurrently" =
             (Harness.sell
                ~price_cents:(15000 + i)
                ~participant:Harness.bob
+               ~client_order_id:i
                ())
           |> Deferred.ignore_m)
     in
@@ -267,6 +272,7 @@ let%expect_test "e2e: audit log subscriber sees full unfiltered stream \
            ~price_cents:20000
            ~symbol:Harness.tsla
            ~participant:Harness.bob
+           ~client_order_id:1
            ())
     in
     [%expect
@@ -340,7 +346,7 @@ let%expect_test "Scenario: Login required before submit or cancel" =
         (Harness.buy ~price_cents:15000 ~client_order_id:1 ())
     in
     print_s [%sexp (submit_result : unit Or_error.t)];
-    [%expect {| |}];
+    [%expect {| (Error "not logged in") |}];
     let%bind cancel_result =
       Rpc.Rpc.dispatch_exn
         Rpc_protocol.cancel_order_rpc
@@ -348,7 +354,7 @@ let%expect_test "Scenario: Login required before submit or cancel" =
         (Client_order_id.of_int 1)
     in
     print_s [%sexp (cancel_result : unit Or_error.t)];
-    [%expect {| |}];
+    [%expect {| (Error "not logged in") |}];
     return ())
 ;;
 
@@ -365,7 +371,7 @@ let%expect_test "e2e: resting participant sees Fill on session feed" =
            ~participant:Harness.alice
            ())
     in
-    [%expect {| |}];
+    [%expect {| [Alice] ACCEPTED id=1 AAPL SELL 100@$150.00 DAY |}];
     let%bind () =
       rpc_submit
         bob
@@ -375,7 +381,12 @@ let%expect_test "e2e: resting participant sees Fill on session feed" =
            ~participant:Harness.bob
            ())
     in
-    [%expect {| |}];
+    [%expect
+      {|
+      [Bob] ACCEPTED id=2 AAPL BUY 100@$150.00 DAY
+      [Bob] FILL fill_id=1 AAPL $150.00 x100 aggressor=2(Bob) BUY 1 resting=Alice(1) 1
+      [Alice] FILL fill_id=1 AAPL $150.00 x100 aggressor=2(Bob) BUY 1 resting=Alice(1) 1
+      |}];
     return ())
 ;;
 
@@ -392,7 +403,7 @@ let%expect_test "e2e: login required before submit or cancel" =
         (Harness.buy ~price_cents:15000 ~client_order_id:1 ())
     in
     print_s [%sexp (submit_result : unit Or_error.t)];
-    [%expect {| |}];
+    [%expect {| (Error "not logged in") |}];
     let%bind cancel_result =
       Rpc.Rpc.dispatch_exn
         Rpc_protocol.cancel_order_rpc
@@ -400,7 +411,7 @@ let%expect_test "e2e: login required before submit or cancel" =
         (Client_order_id.of_int 1)
     in
     print_s [%sexp (cancel_result : unit Or_error.t)];
-    [%expect {| |}];
+    [%expect {| (Error "not logged in") |}];
     return ())
 ;;
 
@@ -418,6 +429,6 @@ let%expect_test "e2e: duplicate login with same participant name fails" =
         (Participant.to_string Harness.alice)
     in
     print_s [%sexp (login_result : Participant.t Or_error.t)];
-    [%expect {| |}];
+    [%expect {| (Error "participant is already in a session") |}];
     return ())
 ;;

@@ -1,28 +1,10 @@
-(** Text protocol for communicating with the exchange.
+(** Human-readable formatting of exchange events.
 
-    This module defines how order requests are represented as text and how
-    exchange events are formatted for display. On a production exchange, this
-    would be a binary protocol like FIX for performance and interoperability.
-    We use a simple human-readable text format for ease of debugging and
-    interactive use.
-
-    {2 Command format}
-
-    Each command is a single line of text:
-    {v
-    BUY <client_id> <symbol> <size> <price> [DAY|IOC]
-    SELL <client_id> <symbol> <size> <price> [DAY|IOC]
-    v}
-
-    Examples:
-    {v
-    BUY AAPL 100 150.25
-    SELL TSLA 50 200.00 IOC
-    BUY AAPL 100 150.00 DAY as Alice
-    v}
-
-    Time-in-force defaults to DAY if omitted. Participant defaults to
-    "anonymous" if omitted. *)
+    Renders each {!Jsip_types.Exchange_event.t} as a single line of text for
+    display in the CLI client, monitor, and audit log. On a production
+    exchange this would be a binary protocol like FIX; the text format here
+    is for ease of debugging and interactive use. Command {i parsing} lives
+    in {!Exchange_command}. *)
 
 open! Core
 open Jsip_types
