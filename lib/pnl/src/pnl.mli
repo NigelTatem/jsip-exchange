@@ -3,8 +3,8 @@
     A {!t} accumulates trading state for every participant the exchange has
     seen. For each [(participant, symbol)] pair it tracks three things:
 
-    - {b inventory}: the signed position in shares (positive = long,
-      negative = short);
+    - {b inventory}: the signed position in shares (positive = long, negative
+      = short);
     - {b cost basis}: the total signed cost of the current position, from
       which an {e average entry price} is derived ([cost_basis / shares]);
     - {b realized cash}: profit or loss locked in when shares are closed out.

@@ -37,7 +37,7 @@ module Position = struct
         shares = t.shares + delta
       ; cost_basis_cents = t.cost_basis_cents + (price_cents * delta)
       }
-    else begin
+    else (
       (* Reducing, fully closing, or flipping the position. This is where
          realized P&L is booked. *)
       let avg = t.cost_basis_cents / t.shares in
@@ -62,8 +62,7 @@ module Position = struct
         shares = new_shares
       ; cost_basis_cents
       ; realized_cents = t.realized_cents + realized_delta
-      }
-    end
+      })
   ;;
 end
 
@@ -115,12 +114,9 @@ module Trade_report = struct
 
   let of_exchange_event : Exchange_event.t -> t option = function
     | Trade_report { symbol; price; size = _ } -> Some { symbol; price }
-    | Order_accept _
-    | Fill _
-    | Order_cancel _
-    | Order_reject _
-    | Best_bid_offer_update _
-    | Cancel_reject _ -> None
+    | Order_accept _ | Fill _ | Order_cancel _ | Order_reject _
+    | Best_bid_offer_update _ | Cancel_reject _ ->
+      None
   ;;
 end
 
@@ -155,7 +151,8 @@ let summarize_position ~symbol (position : Position.t) : Summary.per_symbol =
   let average_entry_price =
     if position.shares = 0
     then None
-    else Some (Price.of_int_cents (position.cost_basis_cents / position.shares))
+    else
+      Some (Price.of_int_cents (position.cost_basis_cents / position.shares))
   in
   (* Compute unrealized from the exact cost basis rather than the rounded
      average: [shares * ref - cost_basis = shares * (ref - avg)]. *)
@@ -163,7 +160,8 @@ let summarize_position ~symbol (position : Position.t) : Summary.per_symbol =
     match position.reference_price with
     | None -> 0
     | Some reference ->
-      (position.shares * Price.to_int_cents reference) - position.cost_basis_cents
+      (position.shares * Price.to_int_cents reference)
+      - position.cost_basis_cents
   in
   { symbol
   ; position = position.shares
@@ -180,7 +178,8 @@ let summary t participant : Summary.t =
   in
   let per_symbol =
     Map.to_alist by_symbol
-    |> List.map ~f:(fun (symbol, position) -> summarize_position ~symbol position)
+    |> List.map ~f:(fun (symbol, position) ->
+      summarize_position ~symbol position)
   in
   let total_realized_cents =
     List.sum (module Int) per_symbol ~f:(fun s -> s.realized_cents)

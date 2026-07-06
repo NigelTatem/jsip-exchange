@@ -5,8 +5,8 @@ open Jsip_test_harness
 open Harness
 
 (* Build a fill from the aggressor's point of view. The aggressor trades on
-   [side]; the resting participant is on the opposite side. Ids are
-   arbitrary — P&L only cares about participant, symbol, side, price, size. *)
+   [side]; the resting participant is on the opposite side. Ids are arbitrary
+   — P&L only cares about participant, symbol, side, price, size. *)
 let fill ~aggressor ~side ~resting ~price_cents ~size : Fill.t =
   { fill_id = 1
   ; symbol = aapl
@@ -37,15 +37,26 @@ let%expect_test "long: open, add, mark, partially close" =
   let t =
     Pnl.apply_fill
       t
-      (fill ~aggressor:alice ~side:Buy ~resting:bob ~price_cents:15000 ~size:100)
+      (fill
+         ~aggressor:alice
+         ~side:Buy
+         ~resting:bob
+         ~price_cents:15000
+         ~size:100)
   in
   let t =
     Pnl.apply_fill
       t
-      (fill ~aggressor:alice ~side:Buy ~resting:bob ~price_cents:15200 ~size:100)
+      (fill
+         ~aggressor:alice
+         ~side:Buy
+         ~resting:bob
+         ~price_cents:15200
+         ~size:100)
   in
   print_summary "after buys" t alice;
-  [%expect {|
+  [%expect
+    {|
     ("after buys" Alice
      (summary
       ((per_symbol
@@ -54,9 +65,14 @@ let%expect_test "long: open, add, mark, partially close" =
        (total_realized_cents 0) (total_unrealized_cents 0))))
     |}];
   (* Public print at $155 refreshes the reference price for unrealized P&L. *)
-  let t = Pnl.apply_trade_report t { symbol = aapl; price = Price.of_int_cents 15500 } in
+  let t =
+    Pnl.apply_trade_report
+      t
+      { symbol = aapl; price = Price.of_int_cents 15500 }
+  in
   print_summary "after $155 print" t alice;
-  [%expect {|
+  [%expect
+    {|
     ("after $155 print" Alice
      (summary
       ((per_symbol
@@ -69,10 +85,16 @@ let%expect_test "long: open, add, mark, partially close" =
   let t =
     Pnl.apply_fill
       t
-      (fill ~aggressor:alice ~side:Sell ~resting:charlie ~price_cents:16000 ~size:50)
+      (fill
+         ~aggressor:alice
+         ~side:Sell
+         ~resting:charlie
+         ~price_cents:16000
+         ~size:50)
   in
   print_summary "after selling 50 @ $160" t alice;
-  [%expect {|
+  [%expect
+    {|
     ("after selling 50 @ $160" Alice
      (summary
       ((per_symbol
@@ -90,11 +112,21 @@ let%expect_test "resting short side is tracked too" =
   let t =
     Pnl.apply_fill
       t
-      (fill ~aggressor:alice ~side:Buy ~resting:bob ~price_cents:15000 ~size:100)
+      (fill
+         ~aggressor:alice
+         ~side:Buy
+         ~resting:bob
+         ~price_cents:15000
+         ~size:100)
   in
-  let t = Pnl.apply_trade_report t { symbol = aapl; price = Price.of_int_cents 14800 } in
+  let t =
+    Pnl.apply_trade_report
+      t
+      { symbol = aapl; price = Price.of_int_cents 14800 }
+  in
   print_summary "bob short, marked $148" t bob;
-  [%expect {|
+  [%expect
+    {|
     ("bob short, marked $148" Bob
      (summary
       ((per_symbol
