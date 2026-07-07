@@ -1,0 +1,17 @@
+(executable
+ (name main)
+ (modes js)
+ (js_of_ocaml
+  (flags
+   (:standard --effects=cps)))
+ (libraries
+  core
+  jsip_types
+  jsip_dashboard_protocol
+  jsip_dashboard_controller
+  bonsai
+  bonsai.extra
+  bonsai_web
+  virtual_dom)
+ (preprocess
+  (pps ppx_jane bonsai.ppx_bonsai ppx_html js_of_ocaml-ppx)))

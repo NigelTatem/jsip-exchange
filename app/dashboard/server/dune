@@ -1,0 +1,13 @@
+(executable
+ (name main)
+ (libraries
+  core
+  async
+  jsip_types
+  jsip_gateway
+  jsip_dashboard_protocol
+  async_rpc_websocket
+  cohttp-async
+  core_unix.command_unix)
+ (preprocess
+  (pps ppx_jane)))
