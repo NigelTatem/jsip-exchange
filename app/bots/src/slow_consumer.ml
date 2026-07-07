@@ -28,11 +28,17 @@ let on_tick (_config : Config.t) (_ctx : Context.t) = return ()
    [on_event] -- is determined. So delaying (or never determining) here
    throttles how fast the bot reads its market-data pipe.
 
-   Reading slower than events arrive backs the pipe up. The exchange writes
-   to each subscriber's pipe with [Pipe.write_without_pushback_if_open] and
-   sets no size budget on it (see [Dispatcher.push_market_data]), so the
-   exchange-side buffer for this subscriber grows without bound while we
-   dawdle -- exactly the resource this bot targets. *)
+   Reading slower than events arrive backs a pipe up — but, measured against
+   exchange stats (2026-07-07), it is the *bot-side* pipe that grows: the
+   async-rpc client in this process keeps reading the socket and buffering
+   events into the pipe this [on_event] refuses to drain, so the memory cost
+   lands in the bot's own process. The exchange-side buffers stay near zero
+   as long as the socket keeps draining ([Rpc.Pipe_rpc] empties the
+   dispatcher pipe into the transport writer, which empties into the socket).
+   Exchange memory is only at risk when the socket itself stops draining
+   (e.g. a [kill -STOP]ped subscriber) — and the dispatcher now bounds
+   subscriber pipes and evicts at the budget (see [Dispatcher]), so even that
+   is capped. *)
 let on_event
   (config : Config.t)
   (_ctx : Context.t)

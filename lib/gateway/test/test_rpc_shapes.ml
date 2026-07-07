@@ -103,6 +103,19 @@ let%expect_test "market-data RPC" =
   return ()
 ;;
 
+let%expect_test "exchange-stats RPC" =
+  print_s
+    [%sexp
+      (Rpc.Rpc.shapes Rpc_protocol.exchange_stats_rpc
+       : Async_rpc_kernel.Rpc_shapes.t)];
+  [%expect
+    {|
+    (Rpc (query 86ba5df747eec837f0b391dd49f33f9e)
+     (response 0e1b9764501dce783530d88516807ec5))
+    |}];
+  return ()
+;;
+
 let%expect_test "audit-log RPC" =
   print_s
     [%sexp

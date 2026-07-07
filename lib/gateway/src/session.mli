@@ -28,6 +28,10 @@ val reader : t -> Exchange_event.t Pipe.Reader.t
 (** Push an event onto the session's outbound pipe. *)
 val push : t -> Exchange_event.t -> unit
 
+(** Number of events sitting unread in the outbound pipe — this session's row
+    in {!Exchange_stats.Subscriber}. *)
+val backlog : t -> int
+
 (** Close the outbound pipe. Subsequent reads on [reader t] will drain any
     remaining buffered events and then EOF. *)
 val close : t -> unit

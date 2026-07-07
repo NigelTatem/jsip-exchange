@@ -299,15 +299,15 @@ let%expect_test "e2e: audit log subscriber sees full unfiltered stream \
 let%expect_test "dispatcher: closing a subscriber's reader removes the \
                  writer"
   =
-  let dispatcher = Dispatcher.create () in
+  let dispatcher = Dispatcher.create ~subscriber_pipe_budget:1024 () in
   print_s
     [%message
       "initial"
         ~count:
           (Dispatcher.For_testing.audit_subscriber_count dispatcher : int)];
   [%expect {| (initial (count 0)) |}];
-  let reader_a = Dispatcher.subscribe_audit dispatcher in
-  let reader_b = Dispatcher.subscribe_audit dispatcher in
+  let reader_a = Dispatcher.subscribe_audit dispatcher ~label:"audit-a" in
+  let reader_b = Dispatcher.subscribe_audit dispatcher ~label:"audit-b" in
   print_s
     [%message
       "after subscribe"

@@ -8,6 +8,7 @@ module Verb = struct
     | Book
     | Subscribe
     | Cancel
+    | Stats
   [@@deriving
     sexp
     , bin_io
@@ -23,6 +24,7 @@ type t =
   | Book of Symbol.t
   | Subscribe of Symbol.t
   | Cancel of Client_order_id.t
+  | Stats
 
 let parse ?default_participant line : t Or_error.t =
   let default_participant =
@@ -140,6 +142,13 @@ let parse ?default_participant line : t Or_error.t =
             in
             Ok (Cancel client_order_id)
           | [] -> Or_error.error_string "expected: CANCEL <client_order_id>"
+          | _ ->
+            Or_error.errorf
+              "unexpected trailing arguments: %s"
+              (String.concat ~sep:" " rest))
+       | Verb.Stats ->
+         (match rest with
+          | [] -> Ok Stats
           | _ ->
             Or_error.errorf
               "unexpected trailing arguments: %s"

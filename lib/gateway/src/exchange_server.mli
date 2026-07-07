@@ -18,6 +18,14 @@ val start : symbols:Symbol.t list -> port:int -> unit -> t Deferred.t
 (** The port the server is listening on. *)
 val port : t -> int
 
+(** Snapshot of exchange health across the four stats families (buffer
+    occupancy, participant activity, book depth, engine busyness); served to
+    clients via {!Rpc_protocol.exchange_stats_rpc}. Cheap — O(resting orders
+    + subscribers + connections) — so safe to poll every second. Reading a
+      snapshot resets the engine's max-gap accumulator; see
+      {!Exchange_stats.Engine.max_gap_since_last_snapshot}. *)
+val stats : t -> Exchange_stats.t
+
 (** Stop the server and close all connections. *)
 val close : t -> unit Deferred.t
 

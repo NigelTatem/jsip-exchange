@@ -80,6 +80,12 @@ market-data feed.|}];
               client_order_id
           in
           loop ()
+        | Ok Stats ->
+          let%bind stats =
+            Rpc.Rpc.dispatch_exn Rpc_protocol.exchange_stats_rpc conn ()
+          in
+          print_s [%sexp (stats : Exchange_stats.t)];
+          loop ()
         | Ok (Book symbol) ->
           let%bind result =
             Rpc.Rpc.dispatch_exn Rpc_protocol.book_query_rpc conn symbol

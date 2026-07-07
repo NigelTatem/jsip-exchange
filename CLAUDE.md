@@ -65,9 +65,9 @@ Common dev loops:
 
 ```sh
 dune build && dune runtest                # the usual cycle
-dune exec app/server/bin/main.exe -- -port 12345 -seed-market-maker
+dune exec app/server/bin/main.exe -- -port 12345
 dune exec app/client/bin/main.exe -- -port 12345 -name Alice
-dune exec app/scenario_runner/bin/main.exe -- -scenario calm-day -port 12345 -seed 0
+dune exec app/scenario_runner/bin/main.exe -- -scenario slow-consumers -port 12345 -seed 0
 dune exec app/monitor/bin/main.exe -- -host localhost -port 12345
 ```
 
@@ -311,17 +311,23 @@ it does, don't re-implement — show the student where it lives.
 
 - Week 2 Ex4–7: noise trader, calm-day scenario, momentum trader,
   earnings-shock scenario. These happen with AI assistance, post-lecture.
-- Anything in `app/bots/src/jsip_bots.ml` — empty placeholder.
-- Anything in `app/scenarios/src/` — `calm_day.ml`, `active_day.ml`,
-  `earnings_shock.ml`, `flash_crash.ml` are all `failwith "TODO:
-implement"` stubs.
-- Anything in `app/monitor`.
-- The audit-log / session backpressure smell at
-  `lib/gateway/src/dispatcher.ml:56,61` and
-  `lib/gateway/src/session.ml:18` — uses
-  `Pipe.write_without_pushback_if_open`, which doesn't bound buffering
-  for slow subscribers. This becomes a real concern in week 3 when
-  students build the `Slow_consumer` pathological bot.
+- The four named market scenarios in `app/scenarios/src/` — `calm_day.ml`,
+  `active_day.ml`, `earnings_shock.ml`, `flash_crash.ml` are still
+  `failwith "TODO: implement"` stubs. (The Part 3 pathological scenarios —
+  `slow_consumers.ml`, `order_spam.ml`, `cancel_storm.ml`, `book_fill.ml` —
+  **are** implemented, as are the pathological bots re-exported from
+  `app/bots/src/jsip_bots.ml` and the `app/monitor` TUI.)
+- ~~The audit-log / session backpressure smell~~ — fixed by the
+  exchange-stats slice (`doc/design-exchange-stats.md`): subscriber pipes
+  are now bounded and slow subscribers are evicted at
+  `subscriber_pipe_size_budget` (see `lib/gateway/src/dispatcher.mli` for
+  the contract). Exchange health — per-subscriber backlog, per-connection
+  `bytes_to_write`, participant activity, book depth, engine busyness,
+  evictions — is observable via `exchange_stats_rpc` and the client's
+  `STATS` command. Note the measured subtlety: the `slow-consumers`
+  scenario's RSS growth lives in the *bots' client-side* pipes (same OS
+  process as the runner), not in the exchange; the server-side buffers
+  only fill when a subscriber's socket stops draining (`kill -STOP`).
 
 ## Stub conventions
 

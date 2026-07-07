@@ -45,6 +45,19 @@ val session_feed_rpc : (unit, Exchange_event.t, Error.t) Rpc.Pipe_rpc.t
 val market_data_rpc
   : (Symbol.t list, Exchange_event.t, Error.t) Rpc.Pipe_rpc.t
 
+(** Poll a point-in-time {!Exchange_stats.t} snapshot of exchange health
+    (buffer occupancy, participant activity, book depth, engine busyness).
+
+    A plain polled RPC rather than a streaming pipe: the poller controls the
+    sampling rate and computes rates from deltas between successive
+    snapshots. The response is bare rather than [Or_error] — assembling a
+    snapshot cannot fail — following the {!book_query_rpc} precedent.
+
+    Like {!audit_log_rpc}, this is an operator-tooling RPC: it exposes other
+    participants' identities and activity, so a production exchange would
+    gate it behind operator credentials. *)
+val exchange_stats_rpc : (unit, Exchange_stats.t) Rpc.Rpc.t
+
 (** Subscribe to the full audit log: every [Exchange_event.t] the matching
     engine produces, across every symbol and participant.
 

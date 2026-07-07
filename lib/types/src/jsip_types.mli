@@ -9,6 +9,7 @@ module Book = Book
 module Cancel_reason = Cancel_reason
 module Client_order_id = Client_order_id
 module Exchange_event = Exchange_event
+module Exchange_stats = Exchange_stats
 module Fill = Fill
 module Level = Level
 module Order = Order

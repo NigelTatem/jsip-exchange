@@ -11,10 +11,20 @@ let print_parse line =
     print_endline [%string "SUBSCRIBE %{symbol#Symbol}"]
   | Ok (Cancel id) ->
     print_endline [%string "CANCEL %{Client_order_id.to_int id#Int}"]
+  | Ok Stats -> print_endline "STATS"
   | Error err -> print_endline [%string "ERROR: %{Error.to_string_hum err}"]
 ;;
 
 (* --- Successful parsing --- *)
+
+let%expect_test "parse: stats" =
+  print_parse "STATS";
+  [%expect {| STATS |}];
+  print_parse "stats";
+  [%expect {| STATS |}];
+  print_parse "STATS AAPL";
+  [%expect {| ERROR: unexpected trailing arguments: AAPL |}]
+;;
 
 let%expect_test "parse: basic buy" =
   print_parse "BUY 1 AAPL 100 150.25";
@@ -125,7 +135,7 @@ let%expect_test "default participant: used when none specified" =
   (match cmd with
    | Submit req ->
      print_endline [%string "participant=%{req.participant#Participant}"]
-   | Book _ | Subscribe _ | Cancel _ ->
+   | Book _ | Subscribe _ | Cancel _ | Stats ->
      print_endline "unexpected command shape");
   [%expect {| participant=DefaultTrader |}]
 ;;
@@ -231,7 +241,7 @@ let%expect_test "round-trip: parse a command, submit, format result" =
   let request =
     match Exchange_command.parse "BUY 2 AAPL 100 150.00" |> ok_exn with
     | Submit req -> req
-    | Book _ | Subscribe _ | Cancel _ -> failwith "expected Submit"
+    | Book _ | Subscribe _ | Cancel _ | Stats -> failwith "expected Submit"
   in
   let events = Matching_engine.submit (Harness.engine t) request in
   print_endline (Event_format.format_events events);
@@ -250,7 +260,7 @@ let%expect_test "BOOK with a symbol argument" =
   let cmd = Exchange_command.parse "BOOK AAPL" |> ok_exn in
   (match cmd with
    | Book symbol -> print_endline [%string "BOOK %{symbol#Symbol}"]
-   | Submit _ | Subscribe _ | Cancel _ ->
+   | Submit _ | Subscribe _ | Cancel _ | Stats ->
      print_endline "unexpected command shape");
   [%expect {| BOOK AAPL |}]
 ;;
@@ -259,6 +269,7 @@ let%expect_test "SUBSCRIBE with case-insensitive input" =
   let cmd = Exchange_command.parse "Subscribe AAPL" |> ok_exn in
   (match cmd with
    | Subscribe symbol -> print_endline [%string "SUBSCRIBE %{symbol#Symbol}"]
-   | Submit _ | Book _ | Cancel _ -> print_endline "unexpected command shape");
+   | Submit _ | Book _ | Cancel _ | Stats ->
+     print_endline "unexpected command shape");
   [%expect {| SUBSCRIBE AAPL |}]
 ;;
