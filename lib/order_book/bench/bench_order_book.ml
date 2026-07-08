@@ -1,7 +1,7 @@
 (** Benchmarks for the order book and matching engine.
 
-    Run with: dune exec lib/order_book/bench/bench_order_book.exe -- -ascii
-    -quota 5
+    Run with: dune exec lib/order_book/bench/bench_order_book.exe -- existing
+    -ascii -quota 5
 
     These benchmarks measure the core operations of the exchange and are
     designed to give you meaningful feedback on the performance of the system
@@ -24,9 +24,9 @@
      {- Compare before/after by saving results:
 
        {v
-          dune exec lib/order_book/bench/bench_order_book.exe -- -ascii -quota 5 > before.txt
+          dune exec lib/order_book/bench/bench_order_book.exe -- existing -ascii -quota 5 > before.txt
           # ... make your changes ...
-          dune exec lib/order_book/bench/bench_order_book.exe -- -ascii -quota 5 > after.txt
+          dune exec lib/order_book/bench/bench_order_book.exe -- existing -ascii -quota 5 > after.txt
           diff before.txt after.txt
        v}
     }
@@ -67,6 +67,31 @@ let book_with_n_asks ?(min_price = 10_000) n =
     Order_book.add book order
   done;
   book, gen
+;;
+
+(** Build a book with [n] resting sell orders all at the {e same} price
+    ($150.00). Unlike {!book_with_n_asks}, every order lands on a single
+    price level, so this stresses code that walks a deep level — e.g.
+    {!Order_book.snapshot} converting every resting order to a display level. *)
+let book_with_n_sells_at_one_price ?(price = 15_000) n =
+  let book = Order_book.create aapl in
+  let gen = Order_id.Generator.create () in
+  for _ = 1 to n do
+    let order =
+      Order.create
+        { symbol = aapl
+        ; participant = bob
+        ; side = Sell
+        ; price = Price.of_int_cents price
+        ; size = Size.of_int 100
+        ; time_in_force = Day
+        ; client_order_id = 0
+        }
+        ~order_id:(Order_id.Generator.next gen)
+    in
+    Order_book.add book order
+  done;
+  book
 ;;
 
 (** Build a matching engine with [n] resting sells on AAPL. *)
@@ -159,6 +184,12 @@ let bench_add_remove ~n =
   Bench.Test.create ~name:[%string "add+remove (n=%{n#Int})"] (fun () ->
     Order_book.add book order;
     Order_book.remove book oid)
+;;
+
+let bench_snapshot ~n =
+  let (book : Order_book.t) = book_with_n_sells_at_one_price n in
+  Bench.Test.create ~name:[%string "snapshot (n=%{n#Int})"] (fun () ->
+    Order_book.snapshot book)
 ;;
 
 (* ---------------------------------------------------------------- *)
@@ -289,22 +320,32 @@ let bench_find_match_alloc ~n =
 (* Main *)
 (* ---------------------------------------------------------------- *)
 
+(* Rather than running all tests at once we seperate using benchmark notation *)
+let sizes = [ 10; 50; 100; 500 ]
+
+let tests =
+  List.concat
+    [ (* Order book micro-benchmarks at various sizes *)
+      List.map sizes ~f:(fun n -> bench_find_match ~n)
+    ; List.map sizes ~f:(fun n -> bench_find_match_no_cross ~n)
+    ; List.map sizes ~f:(fun n -> bench_best_bid_offer ~n)
+    ; [ bench_add_remove ~n:100 ]
+    ; (* Matching engine end-to-end *)
+      List.map sizes ~f:(fun n -> bench_submit_ioc_cross ~n)
+    ; List.map sizes ~f:(fun n -> bench_submit_ioc_no_match ~n)
+    ; List.map [ 10; 50; 100 ] ~f:(fun n -> bench_submit_sweep ~n)
+    ; (* Allocation awareness *)
+      [ bench_find_match_alloc ~n:100 ]
+    ]
+;;
+
 let () =
-  let sizes = [ 10; 50; 100; 500 ] in
-  let tests =
-    List.concat
-      [ (* Order book micro-benchmarks at various sizes *)
-        List.map sizes ~f:(fun n -> bench_find_match ~n)
-      ; List.map sizes ~f:(fun n -> bench_find_match_no_cross ~n)
-      ; List.map sizes ~f:(fun n -> bench_best_bid_offer ~n)
-      ; [ bench_add_remove ~n:100 ]
-      ; (* Matching engine end-to-end *)
-        List.map sizes ~f:(fun n -> bench_submit_ioc_cross ~n)
-      ; List.map sizes ~f:(fun n -> bench_submit_ioc_no_match ~n)
-      ; List.map [ 10; 50; 100 ] ~f:(fun n -> bench_submit_sweep ~n)
-      ; (* Allocation awareness *)
-        [ bench_find_match_alloc ~n:100 ]
-      ]
-  in
-  Command_unix.run (Bench.make_command tests)
+  Command_unix.run
+    (Command.group
+       ~summary:"JSIP order-book benchmarks"
+       [ "existing", Bench.make_command tests
+       ; ( "snapshot"
+         , Bench.make_command
+             (List.map sizes ~f:(fun n -> bench_snapshot ~n)) )
+       ])
 ;;

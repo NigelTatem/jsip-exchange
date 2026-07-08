@@ -1,0 +1,59 @@
+Estimated testing time 54s (54 benchmarks x 1s). Change using '-quota'.
+┌────────────────────────────────────┬────────────┬────────────┬──────────────┬─────────────┬────────────┐
+│ Name                               │   Prom/Run │   mjWd/Run │     Time/Run │     mWd/Run │ Percentage │
+├────────────────────────────────────┼────────────┼────────────┼──────────────┼─────────────┼────────────┤
+│ Map_int build (n=10)               │            │            │     464.13ns │     269.00w │      0.06% │
+│ Map_int get_hit (n=10)             │            │            │      18.46ns │       5.00w │            │
+│ Map_int get_miss (n=10)            │            │            │      21.46ns │       3.00w │            │
+│ Map_int build (n=100)              │      3.32w │      3.32w │  11_643.54ns │   5_258.00w │      1.43% │
+│ Map_int get_hit (n=100)            │            │            │      39.61ns │       5.00w │            │
+│ Map_int get_miss (n=100)           │            │            │      33.66ns │       3.00w │            │
+│ Map_int build (n=1000)             │    457.19w │    457.19w │ 181_167.07ns │  77_840.00w │     22.29% │
+│ Map_int get_hit (n=1000)           │            │            │      48.99ns │       5.00w │            │
+│ Map_int get_miss (n=1000)          │            │            │      46.64ns │       3.00w │            │
+│ Hashtable_int build (n=10)         │            │            │     940.89ns │     180.00w │      0.12% │
+│ Hashtable_int get_hit (n=10)       │            │            │      18.28ns │       5.00w │            │
+│ Hashtable_int get_miss (n=10)      │            │            │      18.22ns │       3.00w │            │
+│ Hashtable_int build (n=100)        │      1.24w │      1.24w │   7_702.70ns │   1_472.00w │      0.95% │
+│ Hashtable_int get_hit (n=100)      │            │            │      18.55ns │       5.00w │            │
+│ Hashtable_int get_miss (n=100)     │            │            │      14.79ns │       3.00w │            │
+│ Hashtable_int build (n=1000)       │  5_980.62w │  7_518.62w │ 161_325.41ns │  11_350.00w │     19.85% │
+│ Hashtable_int get_hit (n=1000)     │            │            │      20.08ns │       5.00w │            │
+│ Hashtable_int get_miss (n=1000)    │            │            │      18.29ns │       3.00w │            │
+│ Map_string build (n=10)            │            │            │     791.68ns │     289.00w │      0.10% │
+│ Map_string get_hit (n=10)          │            │            │      29.55ns │       5.00w │            │
+│ Map_string get_miss (n=10)         │            │            │      38.64ns │       3.00w │            │
+│ Map_string build (n=100)           │      4.61w │      4.61w │  18_614.93ns │   5_497.00w │      2.29% │
+│ Map_string get_hit (n=100)         │            │            │      78.74ns │       5.00w │            │
+│ Map_string get_miss (n=100)        │            │            │      76.82ns │       3.00w │            │
+│ Map_string build (n=1000)          │    658.36w │    658.36w │ 311_490.32ns │  82_288.00w │     38.33% │
+│ Map_string get_hit (n=1000)        │            │            │      87.04ns │       5.00w │      0.01% │
+│ Map_string get_miss (n=1000)       │            │            │     119.59ns │       3.00w │      0.01% │
+│ Hashtable_string build (n=10)      │            │            │   1_426.29ns │     212.00w │      0.18% │
+│ Hashtable_string get_hit (n=10)    │            │            │      31.10ns │       5.00w │            │
+│ Hashtable_string get_miss (n=10)   │            │            │      31.68ns │       3.00w │            │
+│ Hashtable_string build (n=100)     │      1.83w │      1.83w │  11_858.89ns │   1_696.00w │      1.46% │
+│ Hashtable_string get_hit (n=100)   │            │            │      30.72ns │       5.00w │            │
+│ Hashtable_string get_miss (n=100)  │            │            │      45.92ns │       3.00w │            │
+│ Hashtable_string build (n=1000)    │  8_234.15w │  9_772.15w │ 254_057.23ns │  13_488.00w │     31.26% │
+│ Hashtable_string get_hit (n=1000)  │            │            │      30.76ns │       5.00w │            │
+│ Hashtable_string get_miss (n=1000) │            │            │      20.15ns │       3.00w │            │
+│ Map_record build (n=10)            │      0.17w │      0.17w │   2_560.29ns │     739.00w │      0.32% │
+│ Map_record get_hit (n=10)          │            │            │      34.41ns │       5.00w │            │
+│ Map_record get_miss (n=10)         │            │            │      26.82ns │       3.00w │            │
+│ Map_record build (n=100)           │     19.79w │     19.79w │  30_444.39ns │   9_958.00w │      3.75% │
+│ Map_record get_hit (n=100)         │            │            │      63.13ns │       5.00w │            │
+│ Map_record get_miss (n=100)        │            │            │      44.40ns │       3.00w │            │
+│ Map_record build (n=1000)          │  2_463.10w │  2_463.10w │ 414_133.60ns │ 124_840.00w │     50.96% │
+│ Map_record get_hit (n=1000)        │            │            │      80.87ns │       5.00w │            │
+│ Map_record get_miss (n=1000)       │            │            │      69.11ns │       3.00w │            │
+│ Hashtable_record build (n=10)      │      0.18w │      0.18w │   4_570.52ns │     659.00w │      0.56% │
+│ Hashtable_record get_hit (n=10)    │            │            │      90.26ns │       5.00w │      0.01% │
+│ Hashtable_record get_miss (n=10)   │            │            │      64.54ns │       3.00w │            │
+│ Hashtable_record build (n=100)     │     13.72w │     13.72w │  39_690.71ns │   6_184.00w │      4.88% │
+│ Hashtable_record get_hit (n=100)   │            │            │      82.48ns │       5.00w │      0.01% │
+│ Hashtable_record get_miss (n=100)  │            │            │      64.61ns │       3.00w │            │
+│ Hashtable_record build (n=1000)    │ 20_599.75w │ 22_137.75w │ 812_739.10ns │  58_392.00w │    100.00% │
+│ Hashtable_record get_hit (n=1000)  │            │            │      84.09ns │       5.00w │      0.01% │
+│ Hashtable_record get_miss (n=1000) │            │            │      65.03ns │       3.00w │            │
+└────────────────────────────────────┴────────────┴────────────┴──────────────┴─────────────┴────────────┘

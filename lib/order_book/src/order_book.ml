@@ -135,18 +135,24 @@ let best_bid_offer t : Bbo.t =
 ;;
 
 let snapshot_side t (side : Side.t) =
-  (* The map is keyed ascending by [(price, order_id)] for matching, but the
-     book is displayed best-first: bids highest-price-first, asks
-     lowest-price-first. *)
-  let compare =
-    match side with
-    | Buy -> Comparable.reverse Level.compare
-    | Sell -> Level.compare
+  (* The map is keyed ascending by [(price, order_id)], so orders at the
+     same price are adjacent: one fold merges each run of equal prices
+     into a single aggregated level. Consing while folding ascending
+     yields a descending (best-first) list for bids; asks are reversed
+     back to ascending. *)
+  let descending =
+    Map.fold
+      (side_map t side)
+      ~init:[]
+      ~f:(fun ~key:_ ~data:order levels ->
+        let order_level = Level.of_order order in
+        match levels with
+        | { Level.price; size } :: rest
+          when Price.equal price order_level.price ->
+          { Level.price; size = Size.( + ) size order_level.size } :: rest
+        | _ -> order_level :: levels)
   in
-  side_map t side
-  |> Map.data
-  |> List.map ~f:Level.of_order
-  |> List.sort ~compare
+  match side with Buy -> descending | Sell -> List.rev descending
 ;;
 
 let snapshot t =

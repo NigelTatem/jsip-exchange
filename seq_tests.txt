@@ -1,0 +1,23 @@
+Estimated testing time 18s (18 benchmarks x 1s). Change using '-quota'.
+┌────────────────────────────────┬────────────┬────────────┬────────────────┬───────────────┬────────────┐
+│ Name                           │   Prom/Run │   mjWd/Run │       Time/Run │       mWd/Run │ Percentage │
+├────────────────────────────────┼────────────┼────────────┼────────────────┼───────────────┼────────────┤
+│ List_seq build (n=10)          │            │            │       311.51ns │       200.00w │      0.01% │
+│ List_seq get_hit (n=10)        │            │            │        18.54ns │         5.00w │            │
+│ List_seq get_miss (n=10)       │            │            │         9.53ns │         3.00w │            │
+│ List_seq build (n=100)         │     11.61w │     11.61w │    21_178.90ns │    15_455.00w │      0.72% │
+│ List_seq get_hit (n=100)       │            │            │        84.90ns │         5.00w │            │
+│ List_seq get_miss (n=100)      │            │            │         9.85ns │         3.00w │            │
+│ List_seq build (n=1000)        │ 10_243.76w │ 10_243.76w │ 2_922_911.52ns │ 1_504_505.00w │    100.00% │
+│ List_seq get_hit (n=1000)      │            │            │       731.67ns │         5.00w │      0.03% │
+│ List_seq get_miss (n=1000)     │            │            │         9.91ns │         3.00w │            │
+│ Dynarray_seq build (n=10)      │            │            │       276.02ns │        82.00w │            │
+│ Dynarray_seq get_hit (n=10)    │            │            │        14.75ns │         5.00w │            │
+│ Dynarray_seq get_miss (n=10)   │            │            │        10.20ns │         3.00w │            │
+│ Dynarray_seq build (n=100)     │      0.36w │      0.36w │     2_300.99ns │       759.00w │      0.08% │
+│ Dynarray_seq get_hit (n=100)   │            │            │        13.92ns │         5.00w │            │
+│ Dynarray_seq get_miss (n=100)  │            │            │        10.20ns │         3.00w │            │
+│ Dynarray_seq build (n=1000)    │  2_002.47w │  3_540.47w │    62_885.77ns │     5_516.00w │      2.15% │
+│ Dynarray_seq get_hit (n=1000)  │            │            │        13.90ns │         5.00w │            │
+│ Dynarray_seq get_miss (n=1000) │            │            │        10.14ns │         3.00w │            │
+└────────────────────────────────┴────────────┴────────────┴────────────────┴───────────────┴────────────┘
