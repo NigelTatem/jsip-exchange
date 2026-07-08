@@ -98,7 +98,7 @@ let start_matching_loop ~engine ~dispatcher ~submits ~timing request_reader =
 ;;
 
 (* Each helper below gathers one metric family for the stats snapshot
-   (doc/design-exchange-stats.md). All are read-only except [engine_row],
+   below. All are read-only except [engine_row],
    which resets the max-gap accumulator. *)
 
 let subscriber_rows (source : Stats_source.t) =

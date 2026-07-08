@@ -1,7 +1,7 @@
 (** A point-in-time snapshot of exchange health.
 
     Covers the four metric families from the stats design
-    ([doc/design-exchange-stats.md]):
+    below:
 
     - {!Subscriber}: backlog of each feed pipe inside the the gateway's
       [Dispatcher] (layer 1 of the buffering picture)

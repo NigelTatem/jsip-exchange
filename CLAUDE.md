@@ -318,7 +318,7 @@ it does, don't re-implement — show the student where it lives.
   **are** implemented, as are the pathological bots re-exported from
   `app/bots/src/jsip_bots.ml` and the `app/monitor` TUI.)
 - ~~The audit-log / session backpressure smell~~ — fixed by the
-  exchange-stats slice (`doc/design-exchange-stats.md`): subscriber pipes
+  exchange-stats slice: subscriber pipes
   are now bounded and slow subscribers are evicted at
   `subscriber_pipe_size_budget` (see `lib/gateway/src/dispatcher.mli` for
   the contract). Exchange health — per-subscriber backlog, per-connection
