@@ -32,10 +32,16 @@ type t
 (** Create a dispatcher. [subscriber_pipe_budget] is the maximum number of
     unread events any single subscriber pipe (market data, audit, or session)
     may hold; a pipe at the budget is closed on the next write — see the
-    module comment for the eviction contract. *)
-val create : subscriber_pipe_budget:int -> unit -> t
+    module comment for the eviction contract. [registry] is the server's
+    shared participant name<->id map: session events name participants, and
+    are routed to their session by the interned id. *)
+val create
+  :  subscriber_pipe_budget:int
+  -> registry:Participant_registry.t
+  -> unit
+  -> t
 
-val sessions : t -> Session.t Participant.Table.t
+val sessions : t -> Session.t Participant_id.Table.t
 
 (** Subscribe to public market data for one or more [symbols]. The same pipe
     receives events for every requested symbol; the dispatcher avoids
@@ -82,7 +88,7 @@ val events_dispatched : t -> int
 val evictions : t -> int
 
 val clean_up_session : t -> Session.t -> unit Deferred.t
-val set_up_session : t -> Participant.t -> Session.t Deferred.t
+val set_up_session : t -> Participant_id.t -> Session.t Deferred.t
 
 module For_testing : sig
   val audit_subscriber_count : t -> int

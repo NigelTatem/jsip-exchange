@@ -50,10 +50,11 @@ module Stats_source = struct
   type t =
     { engine : Matching_engine.t
     ; dispatcher : Dispatcher.t
+    ; registry : Participant_registry.t
     ; request_reader : Order.Request.t Pipe.Reader.t
     ; symbols : Symbol.t list
     ; connections : Connection_state.t Bag.t
-    ; submits : int Participant.Table.t
+    ; submits : int Participant_id.Table.t
     ; timing : Loop_timing.t
     }
 end
@@ -88,18 +89,30 @@ let handle_submit ~request_writer (request : Order.Request.t) =
   Ok ()
 ;;
 
-let start_matching_loop ~engine ~dispatcher ~submits ~timing request_reader =
+let start_matching_loop
+  ~engine
+  ~dispatcher
+  ~registry
+  ~submits
+  ~timing
+  request_reader
+  =
   don't_wait_for
     (Pipe.iter_without_pushback request_reader ~f:(fun request ->
        Loop_timing.record_iteration timing ~now:(Time_ns.now ());
-       Hashtbl.incr submits request.Order.Request.participant;
+       let participant_id =
+         Participant_registry.intern
+           registry
+           request.Order.Request.participant
+       in
+       Hashtbl.incr submits participant_id;
        let events = Matching_engine.submit engine request in
        Dispatcher.dispatch dispatcher events))
 ;;
 
-(* Each helper below gathers one metric family for the stats snapshot
-   below. All are read-only except [engine_row],
-   which resets the max-gap accumulator. *)
+(* Each helper below gathers one metric family for the stats snapshot below.
+   All are read-only except [engine_row], which resets the max-gap
+   accumulator. *)
 
 let subscriber_rows (source : Stats_source.t) =
   Dispatcher.subscriber_stats source.dispatcher
@@ -121,7 +134,10 @@ let connection_rows (source : Stats_source.t) =
    [snapshot]'s job. *)
 
 let submit_counts (source : Stats_source.t) =
-  source.submits |> Hashtbl.to_alist |> Participant.Map.of_alist_exn
+  Hashtbl.to_alist source.submits
+  |> List.map ~f:(fun (id, count) ->
+    Participant_registry.name source.registry id, count)
+  |> Participant.Map.of_alist_exn
 ;;
 
 let resting_counts (source : Stats_source.t) =
@@ -203,17 +219,22 @@ let snapshot (source : Stats_source.t) : Exchange_stats.t =
 
 let start ~symbols ~port () =
   let engine = Matching_engine.create symbols in
+  let registry = Participant_registry.create () in
   let dispatcher =
-    Dispatcher.create ~subscriber_pipe_budget:subscriber_pipe_size_budget ()
+    Dispatcher.create
+      ~subscriber_pipe_budget:subscriber_pipe_size_budget
+      ~registry
+      ()
   in
   let request_reader, request_writer = Pipe.create () in
   Pipe.set_size_budget request_writer request_queue_size_budget;
   let connections = Bag.create () in
-  let submits = Participant.Table.create () in
+  let submits = Participant_id.Table.create () in
   let timing = Loop_timing.create () in
   let stats_source =
     { Stats_source.engine
     ; dispatcher
+    ; registry
     ; request_reader
     ; symbols
     ; connections
@@ -221,7 +242,13 @@ let start ~symbols ~port () =
     ; timing
     }
   in
-  start_matching_loop ~engine ~dispatcher ~submits ~timing request_reader;
+  start_matching_loop
+    ~engine
+    ~dispatcher
+    ~registry
+    ~submits
+    ~timing
+    request_reader;
   let implementations =
     Rpc.Implementations.create_exn
       ~implementations:
@@ -235,18 +262,16 @@ let start ~symbols ~port () =
                       (Error.of_string "participate name cannot be empty"))
                | stripped_name ->
                  let participant = Participant.of_string stripped_name in
+                 let id = Participant_registry.intern registry participant in
                  let%bind.Deferred.Or_error session =
-                   match
-                     Hashtbl.mem (Dispatcher.sessions dispatcher) participant
-                   with
+                   match Hashtbl.mem (Dispatcher.sessions dispatcher) id with
                    | true ->
                      return
                        (Error
                           (Error.of_string
                              "participant is already in a session"))
                    | false ->
-                     Dispatcher.set_up_session dispatcher participant
-                     |> Deferred.ok
+                     Dispatcher.set_up_session dispatcher id |> Deferred.ok
                  in
                  connection_state.Connection_state.session <- Some session;
                  return (Ok participant))

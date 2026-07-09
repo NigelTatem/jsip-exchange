@@ -278,6 +278,36 @@ let bench_submit_sweep ~n =
 ;;
 
 (* ---------------------------------------------------------------- *)
+(* Symbol-lookup benchmarks (Exercise 2) *)
+(* *)
+(* Every benchmark above trades a single symbol (AAPL) and drives *)
+(* it through [submit], where the [t.books] lookup is a tiny slice *)
+(* of the whole matching loop and so is invisible in the timings. *)
+(* Exercise 2 optimizes exactly that lookup, so to see it we build *)
+(* an engine over *many* symbols and time [Matching_engine.book] on *)
+(* its own — the one entry point that is purely the symbol->book *)
+(* resolution with no matching work layered on top. *)
+(* ---------------------------------------------------------------- *)
+
+(** [n] distinct symbols named [SYM00000], [SYM00001], .... Zero-padded to a
+    fixed width so every symbol is the same length and shares the [SYM]
+    prefix: that makes each string comparison in the map walk do comparable
+    work, so sweeping [n] reflects the tree's depth rather than accidental
+    differences in string length. *)
+let n_symbols n =
+  List.init n ~f:(fun i -> Symbol.of_string (sprintf "SYM%05d" i))
+;;
+
+let engine_with_n_symbols n = Matching_engine.create (n_symbols n)
+
+let bench_symbol_lookup ~n =
+  let engine = engine_with_n_symbols n in
+  let symbol = List.last_exn (n_symbols n) in
+  Bench.Test.create ~name:[%string "symbol_lookup (n=%{n#Int})"] (fun () ->
+    ignore (Matching_engine.book engine symbol : Order_book.t option))
+;;
+
+(* ---------------------------------------------------------------- *)
 (* Allocation measurement *)
 (* ---------------------------------------------------------------- *)
 
@@ -323,6 +353,11 @@ let bench_find_match_alloc ~n =
 (* Rather than running all tests at once we seperate using benchmark notation *)
 let sizes = [ 10; 50; 100; 500 ]
 
+(* Symbol-lookup sweeps over far larger counts than the order-book
+   benchmarks: the O(log n) string comparisons in [Map.find] only pull away
+   from an O(1) array index once there are many symbols. *)
+let symbol_counts = [ 10; 100; 1_000; 10_000 ]
+
 let tests =
   List.concat
     [ (* Order book micro-benchmarks at various sizes *)
@@ -347,5 +382,8 @@ let () =
        ; ( "snapshot"
          , Bench.make_command
              (List.map sizes ~f:(fun n -> bench_snapshot ~n)) )
+       ; ( "symbol-lookup"
+         , Bench.make_command
+             (List.map symbol_counts ~f:(fun n -> bench_symbol_lookup ~n)) )
        ])
 ;;

@@ -1,0 +1,9 @@
+Estimated testing time 20s (4 benchmarks x 5s). Change using '-quota'.
+                                                             
+  Name                      Time/Run   mWd/Run   Percentage  
+ ------------------------- ---------- --------- ------------ 
+  symbol_lookup (n=10)       71.89ns     5.00w       31.33%  
+  symbol_lookup (n=100)     100.84ns     5.00w       43.94%  
+  symbol_lookup (n=1000)    148.47ns     5.00w       64.70%  
+  symbol_lookup (n=10000)   229.48ns     5.00w      100.00%  
+                                                             

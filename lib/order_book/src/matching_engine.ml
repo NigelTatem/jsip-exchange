@@ -12,8 +12,31 @@ module Client_id_key = struct
   include Hashable.Make (T)
 end
 
+module Symbol_registry = struct
+  type t =
+    { id_table : int Symbol.Table.t
+    ; books : Order_book.t array
+    }
+  [@@deriving sexp_of]
+
+  let create symbols =
+    let id_table = Symbol.Table.create () in
+    let books =
+      List.mapi symbols ~f:(fun id symbol ->
+        Hashtbl.add_exn id_table ~key:symbol ~data:id;
+        Order_book.create symbol)
+      |> Array.of_list
+    in
+    { id_table; books }
+  ;;
+
+  let book t symbol =
+    Option.map (Hashtbl.find t.id_table symbol) ~f:(fun id -> t.books.(id))
+  ;;
+end
+
 type t =
-  { books : Order_book.t Symbol.Map.t
+  { registry : Symbol_registry.t
   ; order_id_gen : Order_id.Generator.t
   ; mutable next_fill_id : int
   ; used_client_ids : Order.t Client_id_key.Table.t
@@ -21,18 +44,14 @@ type t =
 [@@deriving sexp_of]
 
 let create symbols =
-  let books =
-    List.map symbols ~f:(fun sym -> sym, Order_book.create sym)
-    |> Symbol.Map.of_alist_exn
-  in
-  { books
+  { registry = Symbol_registry.create symbols
   ; order_id_gen = Order_id.Generator.create ()
   ; next_fill_id = 1
   ; used_client_ids = Client_id_key.Table.create ()
   }
 ;;
 
-let book t symbol = Map.find t.books symbol
+let book t symbol = Symbol_registry.book t.registry symbol
 
 (** Run the matching loop: repeatedly find a compatible resting order and
     fill against it. Returns the list of Fill and Trade_report events
@@ -84,7 +103,7 @@ let rec match_loop ~used_client_ids ~book ~order ~fill_id =
 ;;
 
 let submit t (request : Order.Request.t) =
-  match Map.find t.books request.symbol with
+  match Symbol_registry.book t.registry request.symbol with
   | None ->
     [ Exchange_event.Order_reject { request; reason = "unknown symbol" } ]
   | Some book ->
@@ -167,14 +186,18 @@ let cancel t ~participant ~client_order_id =
     ]
   | Some order ->
     let symbol = Order.symbol order in
-    let book = Map.find_exn t.books symbol in
     let order_id = Order.order_id order in
-    (match Order_book.find book order_id with
+    let resting =
+      let%bind.Option book = Symbol_registry.book t.registry symbol in
+      let%map.Option active_order = Order_book.find book order_id in
+      book, active_order
+    in
+    (match resting with
      | None ->
        [ Exchange_event.Cancel_reject
            { participant; client_order_id; reason = "order not active" }
        ]
-     | Some _active_order ->
+     | Some (book, _active_order) ->
        let bbo_before = Order_book.best_bid_offer book in
        Order_book.remove book order_id;
        Hashtbl.remove t.used_client_ids (participant, client_order_id);

@@ -24,7 +24,12 @@ let print_rows dispatcher =
 let%expect_test "subscriber backlog is labeled and shrinks as events are \
                  read"
   =
-  let dispatcher = Dispatcher.create ~subscriber_pipe_budget:1024 () in
+  let dispatcher =
+    Dispatcher.create
+      ~subscriber_pipe_budget:1024
+      ~registry:(Participant_registry.create ())
+      ()
+  in
   let reader =
     Dispatcher.subscribe_market_data
       dispatcher
@@ -50,7 +55,12 @@ let%expect_test "subscriber backlog is labeled and shrinks as events are \
    symbols is one pipe registered in two per-symbol bags, but must appear in
    the stats exactly once, with the backlog of the single pipe. *)
 let%expect_test "a multi-symbol subscriber appears in stats exactly once" =
-  let dispatcher = Dispatcher.create ~subscriber_pipe_budget:1024 () in
+  let dispatcher =
+    Dispatcher.create
+      ~subscriber_pipe_budget:1024
+      ~registry:(Participant_registry.create ())
+      ()
+  in
   let msft = Symbol.of_string "MSFT" in
   let (_ : Exchange_event.t Pipe.Reader.t) =
     Dispatcher.subscribe_market_data
@@ -66,12 +76,17 @@ let%expect_test "a multi-symbol subscriber appears in stats exactly once" =
 ;;
 
 let%expect_test "audit and session feeds get their own labeled rows" =
-  let dispatcher = Dispatcher.create ~subscriber_pipe_budget:1024 () in
+  let registry = Participant_registry.create () in
+  let dispatcher =
+    Dispatcher.create ~subscriber_pipe_budget:1024 ~registry ()
+  in
   let (_ : Exchange_event.t Pipe.Reader.t) =
     Dispatcher.subscribe_audit dispatcher ~label:"audit:test-monitor"
   in
   let%bind (_ : Session.t) =
-    Dispatcher.set_up_session dispatcher Harness.alice
+    Dispatcher.set_up_session
+      dispatcher
+      (Participant_registry.intern registry Harness.alice)
   in
   (* The BBO update reaches the audit firehose but not Alice's session; her
      row exists (she is logged in) with an empty backlog. *)
@@ -89,7 +104,12 @@ let%expect_test "audit and session feeds get their own labeled rows" =
    reading is evicted when its pipe hits the budget; a subscriber that keeps
    up is untouched. *)
 let%expect_test "a subscriber at the pipe budget is evicted and counted" =
-  let dispatcher = Dispatcher.create ~subscriber_pipe_budget:3 () in
+  let dispatcher =
+    Dispatcher.create
+      ~subscriber_pipe_budget:3
+      ~registry:(Participant_registry.create ())
+      ()
+  in
   let never_reads =
     Dispatcher.subscribe_market_data
       dispatcher

@@ -20,7 +20,8 @@ type t =
          many symbol bags its writer sits in. Folding over the per-symbol
          bags instead would count a multi-symbol subscriber once per symbol. *)
   ; audit_subscribers : subscriber Bag.t
-  ; sessions : Session.t Participant.Table.t
+  ; sessions : Session.t Participant_id.Table.t
+  ; registry : Participant_registry.t
   ; subscriber_pipe_budget : int
   ; mutable events_dispatched : int
   ; mutable evictions : int
@@ -28,11 +29,12 @@ type t =
 
 let sessions t = t.sessions
 
-let create ~subscriber_pipe_budget () =
+let create ~subscriber_pipe_budget ~registry () =
   { market_data_subscribers_by_symbol = Symbol.Table.create ()
   ; market_data_subscribers = Bag.create ()
   ; audit_subscribers = Bag.create ()
-  ; sessions = Participant.Table.create ()
+  ; sessions = Participant_id.Table.create ()
+  ; registry
   ; subscriber_pipe_budget
   ; events_dispatched = 0
   ; evictions = 0
@@ -100,33 +102,43 @@ let push_audit t event =
 ;;
 
 let push_to_session t participant event =
-  match Hashtbl.find t.sessions participant with
+  (* Events carry the participant *name* (they are wire-bound); the session
+     table is keyed by interned id, so resolve name -> id here. A name with
+     no id or no live session is skipped, exactly as the old name lookup did. *)
+  match Participant_registry.id t.registry participant with
   | None -> ()
-  | Some session ->
-    if Session.backlog session >= t.subscriber_pipe_budget
-    then (
-      t.evictions <- t.evictions + 1;
-      Session.close session)
-    else Session.push session event
+  | Some id ->
+    (match Hashtbl.find t.sessions id with
+     | None -> ()
+     | Some session ->
+       if Session.backlog session >= t.subscriber_pipe_budget
+       then (
+         t.evictions <- t.evictions + 1;
+         Session.close session)
+       else Session.push session event)
 ;;
 
 let clean_up_session t (session : Session.t) =
-  let participant = Session.participant session in
-  Hashtbl.remove t.sessions participant;
+  (match
+     Participant_registry.id t.registry (Session.participant session)
+   with
+   | None -> ()
+   | Some id -> Hashtbl.remove t.sessions id);
   Session.close session;
   return ()
 ;;
 
-let set_up_session t (participant : Participant.t) =
-  match Hashtbl.find t.sessions participant with
+let set_up_session t id =
+  let participant = Participant_registry.name t.registry id in
+  match Hashtbl.find t.sessions id with
   | None ->
     let session = Session.create participant in
-    Hashtbl.set t.sessions ~key:participant ~data:session;
+    Hashtbl.set t.sessions ~key:id ~data:session;
     return session
   | Some existing_session ->
     let%bind () = clean_up_session t existing_session in
     let session = Session.create participant in
-    Hashtbl.set t.sessions ~key:participant ~data:session;
+    Hashtbl.set t.sessions ~key:id ~data:session;
     return session
 ;;
 
