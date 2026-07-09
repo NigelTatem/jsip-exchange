@@ -119,11 +119,11 @@ let submits_of (sample : Exchange_stats.t) participant =
       | false -> None)
 ;;
 
-(* The base for a participant's window rate: the oldest sample reachable
-   from the newest without the cumulative counter moving backward — i.e.
-   only history since the most recent exchange restart. Diffing across a
-   restart would give a negative delta and blank the rate for as long as
-   pre-restart samples stay in the window (~2 minutes). *)
+(* The base for a participant's window rate: the oldest sample reachable from
+   the newest without the cumulative counter moving backward — i.e. only
+   history since the most recent exchange restart. Diffing across a restart
+   would give a negative delta and blank the rate for as long as pre-restart
+   samples stay in the window (~2 minutes). *)
 let rate_base samples_newest_first participant =
   let rec walk samples ~base =
     match samples with
@@ -134,17 +134,17 @@ let rate_base samples_newest_first participant =
        | Some (taken_at, submits) ->
          (match base with
           | Some (_, base_submits) when submits > base_submits ->
-            (* The counter was larger further in the past: that's the
-               restart boundary — stop here. *)
+            (* The counter was larger further in the past: that's the restart
+               boundary — stop here. *)
             base
           | Some _ | None -> walk older ~base:(Some (taken_at, submits))))
   in
   walk samples_newest_first ~base:None
 ;;
 
-(* Window-averaged submit rate per participant, measured from the most
-   recent counter reset (see [rate_base]). [None] when there is only one
-   usable sample to date. *)
+(* Window-averaged submit rate per participant, measured from the most recent
+   counter reset (see [rate_base]). [None] when there is only one usable
+   sample to date. *)
 let participant_rows (samples : Exchange_stats.t list) =
   match List.last samples with
   | None -> []

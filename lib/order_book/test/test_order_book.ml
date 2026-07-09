@@ -289,9 +289,9 @@ let%expect_test "snapshot lists levels in price-time priority order" =
 let%expect_test "snapshot aggregates orders resting at the same price" =
   let book = Order_book.create Harness.aapl in
   (* Two participants stacked on each side of the same price level. The
-     [Book.t] contract (see [book.mli]) is one level per distinct price
-     with the total resting size — the snapshot must agree with the BBO,
-     which already aggregates. *)
+     [Book.t] contract (see [book.mli]) is one level per distinct price with
+     the total resting size — the snapshot must agree with the BBO, which
+     already aggregates. *)
   Order_book.add
     book
     (make_order ~side:Buy ~price_cents:15000 ~order_id:1 ());

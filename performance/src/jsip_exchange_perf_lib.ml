@@ -162,8 +162,7 @@ let bench_allocation =
         ~name:(sprintf "First_match silly (n=%d)" n)
         (fun () ->
            ignore
-             (Allocations.First_match.silly input ~f:is_target
-              : int option))
+             (Allocations.First_match.silly input ~f:is_target : int option))
     ; Bench.Test.create
         ~name:(sprintf "First_match non_silly (n=%d)" n)
         (fun () ->

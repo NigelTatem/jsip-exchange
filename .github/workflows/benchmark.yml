@@ -35,7 +35,7 @@ jobs:
           eval $(opam env)
           dune build lib/order_book/bench/bench_order_book.exe
           ./_build/default/lib/order_book/bench/bench_order_book.exe \
-            -sexp -quota 2 > bench.sexp
+            existing -sexp -quota 2 > bench.sexp
 
       - name: Upload raw results
         uses: actions/upload-artifact@v4

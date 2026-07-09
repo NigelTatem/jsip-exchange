@@ -120,10 +120,10 @@ let%expect_test "participant rates average over the window; newcomers and \
 let%expect_test "participant rate measures from the most recent restart, \
                  not across it"
   =
-  (* The window still contains a pre-restart sample where Alice's counter
-     was huge. Her rate must be computed from history since the reset —
-     (15 - 5) / 10s = 1.0/s — not blanked for as long as the stale sample
-     stays in the window. *)
+  (* The window still contains a pre-restart sample where Alice's counter was
+     huge. Her rate must be computed from history since the reset — (15 - 5)
+     / 10s = 1.0/s — not blanked for as long as the stale sample stays in the
+     window. *)
   let activity submits : Exchange_stats.Participant_activity.t =
     { participant = Harness.alice; submits; resting_orders = 0 }
   in
