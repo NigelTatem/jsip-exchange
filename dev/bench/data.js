@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783523386035,
+  "lastUpdate": 1783631487757,
   "repoUrl": "https://github.com/NigelTatem/jsip-exchange",
   "entries": {
     "Order book benchmark": [
@@ -3531,6 +3531,153 @@ window.BENCHMARK_DATA = {
           {
             "name": "find_match_alloc (n=100)",
             "value": 30.78329683066426,
+            "unit": "ns"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ubuntu@ip-172-31-29-102.us-east-2.compute.internal",
+            "name": "nigeltatem2@gmail.com"
+          },
+          "committer": {
+            "email": "ubuntu@ip-172-31-29-102.us-east-2.compute.internal",
+            "name": "nigeltatem2@gmail.com"
+          },
+          "distinct": true,
+          "id": "db6fff13fab1573104eedee008686f8a4bc076d8",
+          "message": "Fix CI: format sources and pass 'existing' subcommand in benchmark workflows\n\nThe order-book bench exe is a Command.group (existing/snapshot/symbol-lookup),\nbut benchmark.yml and ci.yml invoked it with no subcommand, so it printed help\nand exited 1. Name the 'existing' subcommand at both call sites.\n\nAlso reformat six sources that had drifted from the ocamlformat profile,\nfixing the CI formatting check.",
+          "timestamp": "2026-07-09T21:05:26Z",
+          "tree_id": "2394ac697df4f507708de390b1cca86785e11eb0",
+          "url": "https://github.com/NigelTatem/jsip-exchange/commit/db6fff13fab1573104eedee008686f8a4bc076d8"
+        },
+        "date": 1783631487014,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "find_match (n=10)",
+            "value": 23.232423590883027,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=50)",
+            "value": 24.608164178309817,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=100)",
+            "value": 25.130885705677183,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=500)",
+            "value": 28.145015343262873,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=10)",
+            "value": 24.187875913696402,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=50)",
+            "value": 25.460447547439493,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=100)",
+            "value": 26.11001047951509,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=500)",
+            "value": 29.149088603491418,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=10)",
+            "value": 106.64131936076528,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=50)",
+            "value": 140.38838470997518,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=100)",
+            "value": 157.69977043439354,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=500)",
+            "value": 212.6539372436281,
+            "unit": "ns"
+          },
+          {
+            "name": "add+remove (n=100)",
+            "value": 528.4843114527197,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=10)",
+            "value": 737.9597161224718,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=50)",
+            "value": 744.3215082945514,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=100)",
+            "value": 739.5523941817298,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=500)",
+            "value": 741.2046763865816,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=10)",
+            "value": 411.47219291228953,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=50)",
+            "value": 412.4740082543823,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=100)",
+            "value": 413.2670292835396,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=500)",
+            "value": 406.69350905014045,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_sweep_10_levels",
+            "value": 1542.7895200748878,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_sweep_50_levels",
+            "value": 4050.4973079759434,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_sweep_100_levels",
+            "value": 7238.308337654289,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_alloc (n=100)",
+            "value": 25.153223931212246,
             "unit": "ns"
           }
         ]
