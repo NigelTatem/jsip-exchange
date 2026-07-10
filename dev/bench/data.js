@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783631642015,
+  "lastUpdate": 1783697852144,
   "repoUrl": "https://github.com/NigelTatem/jsip-exchange",
   "entries": {
     "Order book benchmark": [
@@ -3827,6 +3827,153 @@ window.BENCHMARK_DATA = {
           {
             "name": "find_match_alloc (n=100)",
             "value": 32.25734467359502,
+            "unit": "ns"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ubuntu@ip-172-31-29-102.us-east-2.compute.internal",
+            "name": "nigeltatem2@gmail.com"
+          },
+          "committer": {
+            "email": "ubuntu@ip-172-31-29-102.us-east-2.compute.internal",
+            "name": "nigeltatem2@gmail.com"
+          },
+          "distinct": true,
+          "id": "c752d3e228419ae1ce77626fabeeae42ee42e1c8",
+          "message": "Part 4: Exercise 4 — external symbol-as-int\n\nPush the symbol id onto the wire, then add a symbol-directory RPC so\nclients and the monitor recover human names: name->id at parse,\nid->name at render. lib/types stays int-only; render policy is passed\nin via required ~render_symbol / ~directory args.",
+          "timestamp": "2026-07-10T15:33:08Z",
+          "tree_id": "d69506ad10f830323d448cbb1e8f90d6818da19a",
+          "url": "https://github.com/NigelTatem/jsip-exchange/commit/c752d3e228419ae1ce77626fabeeae42ee42e1c8"
+        },
+        "date": 1783697851775,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "find_match (n=10)",
+            "value": 19.467033941590646,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=50)",
+            "value": 21.17267066144396,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=100)",
+            "value": 22.279865655126063,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=500)",
+            "value": 24.523778229743584,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=10)",
+            "value": 19.09647742159896,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=50)",
+            "value": 21.747278983426863,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=100)",
+            "value": 22.0348589121262,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=500)",
+            "value": 24.74056121649419,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=10)",
+            "value": 92.82954227314845,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=50)",
+            "value": 118.80607815060489,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=100)",
+            "value": 132.17132809044517,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=500)",
+            "value": 174.4516291508996,
+            "unit": "ns"
+          },
+          {
+            "name": "add+remove (n=100)",
+            "value": 506.41870119780276,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=10)",
+            "value": 833.3786859417113,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=50)",
+            "value": 757.1790003411326,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=100)",
+            "value": 710.7246322725764,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=500)",
+            "value": 669.4457895268418,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=10)",
+            "value": 335.7808363363368,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=50)",
+            "value": 339.91097128126796,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=100)",
+            "value": 334.48942188357245,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=500)",
+            "value": 338.8082898463925,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_sweep_10_levels",
+            "value": 1176.2956426511653,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_sweep_50_levels",
+            "value": 2535.4254323773976,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_sweep_100_levels",
+            "value": 4223.932409503354,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_alloc (n=100)",
+            "value": 22.17553969335068,
             "unit": "ns"
           }
         ]
