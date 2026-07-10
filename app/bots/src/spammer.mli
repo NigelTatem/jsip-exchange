@@ -33,7 +33,7 @@ open Jsip_types
     below as a reference point. *)
 module Config : sig
   type t =
-    { symbols : Symbol.t list
+    { symbols : Symbol_id.t list
     (** The symbols to spam. Each tick's burst is spread round-robin across
         this list, so with [n] symbols every book receives roughly
         [orders_per_tick / n] of the load. Must be non-empty — [on_start]

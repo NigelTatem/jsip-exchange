@@ -5,7 +5,7 @@ open Jsip_bot_runtime
 
 module Config = struct
   type t =
-    { symbols : Symbol.t list
+    { symbols : Symbol_id.t list
     ; cycles_per_tick : int
     ; max_in_flight : int
     ; size : int

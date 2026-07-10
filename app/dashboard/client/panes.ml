@@ -193,7 +193,7 @@ let symbols_pane (display : Display.t) =
     List.map display.symbols ~f:(fun row ->
       {%html|
         <tr>
-          <td %{Styles.td}>%{row.symbol#Jsip_types.Symbol}</td>
+          <td %{Styles.td}>%{row.symbol#Jsip_types.Symbol_id}</td>
           <td %{Styles.td_mono}>#{row.bid}</td>
           <td %{Styles.td_mono}>#{row.ask}</td>
           <td %{Styles.td_num}>%{row.bid_depth#Int}</td>

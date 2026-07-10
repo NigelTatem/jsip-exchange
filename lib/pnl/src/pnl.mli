@@ -47,7 +47,7 @@ val apply_fill : t -> Fill.t -> t
     it carries no participant information, only what the whole market sees. *)
 module Trade_report : sig
   type t =
-    { symbol : Symbol.t
+    { symbol : Symbol_id.t
     ; price : Price.t
     }
   [@@deriving sexp_of]
@@ -67,7 +67,7 @@ module Summary : sig
   (** One symbol's line in a participant's summary. All cash figures are in
       integer cents, matching {!Jsip_types.Price}. *)
   type per_symbol =
-    { symbol : Symbol.t
+    { symbol : Symbol_id.t
     ; position : int (** Signed shares: positive long, negative short. *)
     ; average_entry_price : Price.t option
     (** Average price paid for the open position, or [None] when flat.

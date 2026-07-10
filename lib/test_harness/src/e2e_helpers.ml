@@ -4,7 +4,13 @@ open Jsip_gateway
 open Jsip_types
 
 let with_server ~symbols f =
-  let%bind server = Exchange_server.start ~symbols ~port:0 () in
+  let%bind server =
+    Exchange_server.start
+      ~directory:Symbol_directory.empty
+      ~symbols
+      ~port:0
+      ()
+  in
   let port = Exchange_server.port server in
   Monitor.protect
     (fun () -> f ~server ~port)
@@ -30,7 +36,9 @@ let connect_as ~port participant =
   in
   don't_wait_for
     (Pipe.iter_without_pushback session_feed ~f:(fun event ->
-       let e = Event_format.format_event event in
+       let e =
+         Event_format.format_event ~render_symbol:Symbol_id.to_string event
+       in
        print_endline [%string "[%{participant#Participant}] %{e}"]));
   return ({ conn } : client)
 ;;

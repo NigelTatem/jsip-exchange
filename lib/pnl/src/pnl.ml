@@ -67,7 +67,7 @@ module Position = struct
 end
 
 (* All participants' books: participant -> symbol -> position. *)
-type t = Position.t Symbol.Map.t Participant.Map.t
+type t = Position.t Symbol_id.Map.t Participant.Map.t
 
 let empty : t = Participant.Map.empty
 
@@ -75,7 +75,7 @@ let empty : t = Participant.Map.empty
    position when the participant or symbol is new. *)
 let update_cell t ~participant ~symbol ~f : t =
   Map.update t participant ~f:(fun by_symbol ->
-    let by_symbol = Option.value by_symbol ~default:Symbol.Map.empty in
+    let by_symbol = Option.value by_symbol ~default:Symbol_id.Map.empty in
     Map.update by_symbol symbol ~f:(fun position ->
       f (Option.value position ~default:Position.empty)))
 ;;
@@ -107,7 +107,7 @@ let apply_fill t (fill : Fill.t) : t =
 
 module Trade_report = struct
   type t =
-    { symbol : Symbol.t
+    { symbol : Symbol_id.t
     ; price : Price.t
     }
   [@@deriving sexp_of]
@@ -130,7 +130,7 @@ let apply_trade_report t (report : Trade_report.t) : t =
 
 module Summary = struct
   type per_symbol =
-    { symbol : Symbol.t
+    { symbol : Symbol_id.t
     ; position : int
     ; average_entry_price : Price.t option
     ; reference_price : Price.t option
@@ -174,7 +174,7 @@ let summarize_position ~symbol (position : Position.t) : Summary.per_symbol =
 
 let summary t participant : Summary.t =
   let by_symbol =
-    Map.find t participant |> Option.value ~default:Symbol.Map.empty
+    Map.find t participant |> Option.value ~default:Symbol_id.Map.empty
   in
   let per_symbol =
     Map.to_alist by_symbol

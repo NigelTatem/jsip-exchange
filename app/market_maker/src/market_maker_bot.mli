@@ -5,7 +5,7 @@ module Bot_runtime = Jsip_bot_runtime.Bot_runtime
 
 module Config : sig
   type t =
-    { symbol : Symbol.t
+    { symbol : Symbol_id.t
     ; half_spread_cents : int
     ; size_per_level : int
     ; num_levels : int
@@ -26,7 +26,7 @@ val on_event
   -> unit Deferred.t
 
 val create_config
-  :  symbol:Symbol.t
+  :  symbol:Symbol_id.t
   -> half_spread_cents:int
   -> size_per_level:int
   -> num_levels:int

@@ -17,8 +17,16 @@ let default_symbols =
 ;;
 
 let start ~port =
+  (* The authoritative directory lives here: symbol at position [i] gets id
+     [i], the same assignment the engine's [create] makes. The server runs on
+     the ids; the directory only exists to hand names back to consumers. *)
+  let directory = Symbol_directory.of_names default_symbols in
   let%bind server =
-    Exchange_server.start ~symbols:default_symbols ~port ()
+    Exchange_server.start
+      ~directory
+      ~symbols:(Symbol_directory.ids directory)
+      ~port
+      ()
   in
   print_endline
     [%string

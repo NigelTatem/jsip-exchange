@@ -6,3 +6,4 @@ module Participant_registry = Participant_registry
 module Dispatcher = Dispatcher
 module Exchange_server = Exchange_server
 module Exchange_command = Exchange_command
+module Symbol_directory = Symbol_directory

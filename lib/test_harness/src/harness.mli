@@ -23,9 +23,9 @@ open Jsip_order_book
     consistent names across all tests makes expect output easy to read and
     compare. *)
 
-val aapl : Symbol.t
-val tsla : Symbol.t
-val goog : Symbol.t
+val aapl : Symbol_id.t
+val tsla : Symbol_id.t
+val goog : Symbol_id.t
 val alice : Participant.t
 val bob : Participant.t
 val charlie : Participant.t
@@ -38,7 +38,7 @@ type t
 (** Create a fresh exchange harness with the given symbols. Defaults to
     [[aapl; tsla; goog]]. All symbols and participants are automatically
     registered. *)
-val create : ?symbols:Symbol.t list -> unit -> t
+val create : ?symbols:Symbol_id.t list -> unit -> t
 
 (** The underlying matching engine. *)
 val engine : t -> Matching_engine.t
@@ -55,7 +55,7 @@ val buy
   :  price_cents:int
   -> ?client_order_id:Client_order_id.t
   -> ?size:int
-  -> ?symbol:Symbol.t
+  -> ?symbol:Symbol_id.t
   -> ?participant:Participant.t
   -> ?time_in_force:Time_in_force.t
   -> unit
@@ -65,7 +65,7 @@ val sell
   :  price_cents:int
   -> ?client_order_id:Client_order_id.t
   -> ?size:int
-  -> ?symbol:Symbol.t
+  -> ?symbol:Symbol_id.t
   -> ?participant:Participant.t
   -> ?time_in_force:Time_in_force.t
   -> unit
@@ -128,7 +128,7 @@ val print_events : ?show:Show.t -> Exchange_event.t list -> unit
 val print_event : Exchange_event.t -> unit
 
 (** Print the current order book for a symbol. Shows bids, asks, and the BBO. *)
-val print_book : t -> Symbol.t -> unit
+val print_book : t -> Symbol_id.t -> unit
 
 (** Print a concise BBO summary for a symbol. *)
-val print_bbo : t -> Symbol.t -> unit
+val print_bbo : t -> Symbol_id.t -> unit

@@ -31,7 +31,7 @@ open Jsip_types
 
 module Config : sig
   type t =
-    { symbols : Symbol.t list
+    { symbols : Symbol_id.t list
     (** Symbols to flood. Each gets [orders_per_tick] new orders per tick. *)
     ; orders_per_tick : int
     (** New resting orders to submit {e per symbol} on each tick. The primary
@@ -59,7 +59,7 @@ module Config : sig
       fields are required and have no default except [first_client_order_id],
       which defaults to [1]. *)
   val create
-    :  symbols:Symbol.t list
+    :  symbols:Symbol_id.t list
     -> orders_per_tick:int
     -> size:int
     -> min_offset_cents:int

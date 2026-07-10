@@ -23,7 +23,7 @@ let description =
 (* The symbols to spam. Each fundamental sits between the spammer's
    never-marketable bid/ask, so nothing the spammer sends can cross. Add
    tickers to this list to spread the flood over several order books at once. *)
-let symbols = [ Symbol.of_string "SPAM" ]
+let symbols = [ Symbol_id.of_int 0 ]
 let fundamental_price_cents = 10_000
 
 (* Load knobs — the things you'll actually turn while testing on_tick. *)
@@ -63,7 +63,7 @@ let configure () : Scenario_config.t =
       ; tick_interval = Time_ns.Span.of_sec 0.5
       }
     in
-    Symbol.Map.of_alist_exn
+    Symbol_id.Map.of_alist_exn
       (List.map symbols ~f:(fun symbol -> symbol, symbol_config))
   in
   let bots =

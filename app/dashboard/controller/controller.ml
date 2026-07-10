@@ -23,7 +23,7 @@ module Display = struct
 
   module Symbol_row = struct
     type t =
-      { symbol : Symbol.t
+      { symbol : Symbol_id.t
       ; bid : string
       ; ask : string
       ; bid_depth : int

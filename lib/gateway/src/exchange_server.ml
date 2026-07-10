@@ -52,7 +52,7 @@ module Stats_source = struct
     ; dispatcher : Dispatcher.t
     ; registry : Participant_registry.t
     ; request_reader : Order.Request.t Pipe.Reader.t
-    ; symbols : Symbol.t list
+    ; symbols : Symbol_id.t list
     ; connections : Connection_state.t Bag.t
     ; submits : int Participant_id.Table.t
     ; timing : Loop_timing.t
@@ -217,7 +217,7 @@ let snapshot (source : Stats_source.t) : Exchange_stats.t =
   }
 ;;
 
-let start ~symbols ~port () =
+let start ~directory ~symbols ~port () =
   let engine = Matching_engine.create symbols in
   let registry = Participant_registry.create () in
   let dispatcher =
@@ -300,6 +300,11 @@ let start ~symbols ~port () =
                  in
                  Dispatcher.dispatch dispatcher events;
                  return (Ok ()))
+        ; Rpc.Rpc.implement'
+            Rpc_protocol.symbol_directory_rpc
+            (fun (state : Connection_state.t) () ->
+               ignore (state : Connection_state.t);
+               Symbol_directory.to_pairs directory)
         ; Rpc.Rpc.implement' Rpc_protocol.book_query_rpc (fun state symbol ->
             ignore state;
             Matching_engine.book engine symbol

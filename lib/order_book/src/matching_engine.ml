@@ -12,46 +12,37 @@ module Client_id_key = struct
   include Hashable.Make (T)
 end
 
-module Symbol_registry = struct
-  type t =
-    { id_table : int Symbol.Table.t
-    ; books : Order_book.t array
-    }
-  [@@deriving sexp_of]
-
-  let create symbols =
-    let id_table = Symbol.Table.create () in
-    let books =
-      List.mapi symbols ~f:(fun id symbol ->
-        Hashtbl.add_exn id_table ~key:symbol ~data:id;
-        Order_book.create symbol)
-      |> Array.of_list
-    in
-    { id_table; books }
-  ;;
-
-  let book t symbol =
-    Option.map (Hashtbl.find t.id_table symbol) ~f:(fun id -> t.books.(id))
-  ;;
-end
-
 type t =
-  { registry : Symbol_registry.t
+  { books : Order_book.t array
   ; order_id_gen : Order_id.Generator.t
   ; mutable next_fill_id : int
   ; used_client_ids : Order.t Client_id_key.Table.t
   }
 [@@deriving sexp_of]
 
+(* One book per symbol id, indexed directly by the id. The client now sends
+   the [Symbol_id.t] the engine used to hash for in Ex 2, so the name->id
+   table is gone: [create] gives the symbol at position [i] the id [i]. *)
 let create symbols =
-  { registry = Symbol_registry.create symbols
+  { books =
+      List.mapi symbols ~f:(fun id (_ : Symbol_id.t) ->
+        Order_book.create (Symbol_id.of_int id))
+      |> Array.of_list
   ; order_id_gen = Order_id.Generator.create ()
   ; next_fill_id = 1
   ; used_client_ids = Client_id_key.Table.create ()
   }
 ;;
 
-let book t symbol = Symbol_registry.book t.registry symbol
+(* Bounds-checked lookup: an out-of-range id — e.g. a malformed one off the
+   wire — yields [None] instead of raising. That check is the id validation
+   the wire boundary needs. *)
+let book t symbol_id =
+  let index = Symbol_id.to_int symbol_id in
+  if index >= 0 && index < Array.length t.books
+  then Some t.books.(index)
+  else None
+;;
 
 (** Run the matching loop: repeatedly find a compatible resting order and
     fill against it. Returns the list of Fill and Trade_report events
@@ -103,7 +94,7 @@ let rec match_loop ~used_client_ids ~book ~order ~fill_id =
 ;;
 
 let submit t (request : Order.Request.t) =
-  match Symbol_registry.book t.registry request.symbol with
+  match book t request.symbol with
   | None ->
     [ Exchange_event.Order_reject { request; reason = "unknown symbol" } ]
   | Some book ->
@@ -188,7 +179,7 @@ let cancel t ~participant ~client_order_id =
     let symbol = Order.symbol order in
     let order_id = Order.order_id order in
     let resting =
-      let%bind.Option book = Symbol_registry.book t.registry symbol in
+      let%bind.Option book = book t symbol in
       let%map.Option active_order = Order_book.find book order_id in
       book, active_order
     in

@@ -12,7 +12,7 @@ type subscriber =
 
 type t =
   { market_data_subscribers_by_symbol :
-      Exchange_event.t Pipe.Writer.t Bag.t Symbol.Table.t
+      Exchange_event.t Pipe.Writer.t Bag.t Symbol_id.Table.t
       (* Delivery path: per-symbol bags of bare writers; the same writer
          appears in every bag it subscribed to. *)
   ; market_data_subscribers : subscriber Bag.t
@@ -30,7 +30,7 @@ type t =
 let sessions t = t.sessions
 
 let create ~subscriber_pipe_budget ~registry () =
-  { market_data_subscribers_by_symbol = Symbol.Table.create ()
+  { market_data_subscribers_by_symbol = Symbol_id.Table.create ()
   ; market_data_subscribers = Bag.create ()
   ; audit_subscribers = Bag.create ()
   ; sessions = Participant_id.Table.create ()

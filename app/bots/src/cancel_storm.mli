@@ -32,7 +32,7 @@ open Jsip_types
 
 module Config : sig
   type t =
-    { symbols : Symbol.t list
+    { symbols : Symbol_id.t list
     (** Symbols to storm. One submit/cancel loop runs per symbol per tick. *)
     ; cycles_per_tick : int
     (** Number of submit-then-cancel cycles per symbol on each tick. The
@@ -61,7 +61,7 @@ module Config : sig
   (** Build a config with a fresh, private [client_order_id] counter.
       [first_id] defaults to [1]. *)
   val create
-    :  symbols:Symbol.t list
+    :  symbols:Symbol_id.t list
     -> cycles_per_tick:int
     -> max_in_flight:int
     -> size:int

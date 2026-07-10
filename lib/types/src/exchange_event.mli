@@ -17,7 +17,7 @@ type t =
   | Order_cancel of
       { order_id : Order_id.t
       ; participant : Participant.t
-      ; symbol : Symbol.t
+      ; symbol : Symbol_id.t
       ; remaining_size : Size.t
       (** Size that was still unfilled when the order was cancelled. *)
       ; reason : Cancel_reason.t
@@ -28,11 +28,11 @@ type t =
       ; reason : string
       }
   | Best_bid_offer_update of
-      { symbol : Symbol.t
+      { symbol : Symbol_id.t
       ; bbo : Bbo.t
       }
   | Trade_report of
-      { symbol : Symbol.t
+      { symbol : Symbol_id.t
       ; price : Price.t
       ; size : Size.t
       }
@@ -50,4 +50,4 @@ val is_market_data : t -> bool
 
 (** The symbol associated with market data events, or [None] for
     non-market-data events. *)
-val symbol_of_market_data : t -> Symbol.t option
+val symbol_of_market_data : t -> Symbol_id.t option

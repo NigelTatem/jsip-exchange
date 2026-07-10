@@ -13,6 +13,7 @@
 
 open! Core
 open Jsip_types
+open Jsip_gateway
 
 (** A single labelled toggle in the filter row. The bonsai_term layer renders
     each chip as bracketed text colored by [enabled] and prefixed with its
@@ -38,11 +39,11 @@ module Display : sig
   type t =
     { title : string
     ; counter : string
-    ; bbo_panel : (Symbol.t * Bbo.t) list
-    (** Snapshot of the latest BBO per symbol, in first-appearance order.
-        Always visible in the chrome — independent of the event-list filters
-        — so the user can keep an eye on the live market while drilling into
-        specific event categories. *)
+    ; bbo_panel : (string * Bbo.t) list
+    (** Snapshot of the latest BBO per symbol (name already resolved via the
+        directory), in first-appearance order. Always visible in the chrome —
+        independent of the event-list filters — so the user can keep an eye
+        on the live market while drilling into specific event categories. *)
     ; category_chips : Chip.t list
     ; substring_field : substring_field
     ; visible_events : (Event_log.Color.t * string) list
@@ -54,7 +55,10 @@ end
 
 type t
 
-val create : unit -> t
+(** [directory] resolves wire ids to human names in the event log and BBO
+    panel. Pass {!Symbol_directory.empty} for id-only (what tests use); the
+    monitor fetches the real directory at connect and passes it down. *)
+val create : directory:Symbol_directory.t -> t
 
 (** Deliver a new exchange event. The controller appends it to the log; the
     next call to [display] will include it if the current filter admits. *)

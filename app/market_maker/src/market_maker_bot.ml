@@ -23,7 +23,7 @@ type state =
 
 module Config = struct
   type t =
-    { symbol : Symbol.t
+    { symbol : Symbol_id.t
     ; half_spread_cents : int
     ; size_per_level : int
     ; num_levels : int

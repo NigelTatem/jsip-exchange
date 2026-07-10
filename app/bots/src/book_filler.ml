@@ -5,7 +5,7 @@ module Context = Jsip_bot_runtime.Bot_runtime.Context
 
 module Config = struct
   type t =
-    { symbols : Symbol.t list
+    { symbols : Symbol_id.t list
     ; orders_per_tick : int
     ; size : int
     ; min_offset_cents : int

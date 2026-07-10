@@ -31,7 +31,15 @@ val cancel_order_rpc : (Client_order_id.t, unit Or_error.t) Rpc.Rpc.t
 
 (** Query the order book for a given symbol. Returns a structured snapshot of
     all resting orders on both sides, if a book for that symbol exists. *)
-val book_query_rpc : (Symbol.t, Book.t option) Rpc.Rpc.t
+val book_query_rpc : (Symbol_id.t, Book.t option) Rpc.Rpc.t
+
+(** Serve the symbol name<->id directory: the [(name, id)] pairs a consumer
+    needs to turn the ids on the wire back into human names. The
+    authoritative copy is built in the server's [main] and passed to
+    {!Exchange_server.start}; the client and monitor fetch it once at connect
+    and mirror it with {!Symbol_directory.of_pairs}. The server never renders
+    a symbol itself — it only serves this and validates incoming ids. *)
+val symbol_directory_rpc : (unit, (Symbol.t * Symbol_id.t) list) Rpc.Rpc.t
 
 (* nigel *)
 val login_rpc : (string, Participant.t Or_error.t) Rpc.Rpc.t
@@ -43,7 +51,7 @@ val session_feed_rpc : (unit, Exchange_event.t, Error.t) Rpc.Pipe_rpc.t
     avoids the overhead of opening a separate pipe per symbol when a client
     cares about several. *)
 val market_data_rpc
-  : (Symbol.t list, Exchange_event.t, Error.t) Rpc.Pipe_rpc.t
+  : (Symbol_id.t list, Exchange_event.t, Error.t) Rpc.Pipe_rpc.t
 
 (** Poll a point-in-time {!Exchange_stats.t} snapshot of exchange health
     (buffer occupancy, participant activity, book depth, engine busyness).

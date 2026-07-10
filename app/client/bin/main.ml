@@ -16,6 +16,15 @@ let run_client ~host ~port ~participant_name =
     Tcp.Where_to_connect.of_host_and_port { host; port }
   in
   let%bind conn = Rpc.Connection.client where_to_connect >>| Result.ok_exn in
+  (* Fetch the symbol directory once at connect and mirror it locally. From
+     here on the wire carries ids; this mirror is how we turn names the human
+     types into ids (at parse) and ids the server sends back into names (at
+     render). *)
+  let%bind directory =
+    Rpc.Rpc.dispatch_exn Rpc_protocol.symbol_directory_rpc conn ()
+    >>| Symbol_directory.of_pairs
+  in
+  let render_symbol = Symbol_directory.render directory in
   let%bind.Deferred.Or_error participant =
     Rpc.Rpc.dispatch_exn Rpc_protocol.login_rpc conn participant_name
   in
@@ -32,10 +41,13 @@ let run_client ~host ~port ~participant_name =
         (Pipe.iter_without_pushback reader ~f:(fun event ->
            match event with
            | Exchange_event.Fill fill ->
-             (match Fill.to_participant_view fill participant with
+             (match
+                Fill.to_participant_view ~render_symbol fill participant
+              with
               | Some msg -> print_endline msg
-              | None -> print_endline (Fill.to_string fill))
-           | other -> print_endline (Event_format.format_event other)));
+              | None -> print_endline (Fill.to_string ~render_symbol fill))
+           | other ->
+             print_endline (Event_format.format_event ~render_symbol other)));
       return ()
   in
   print_endline
@@ -62,7 +74,10 @@ market-data feed.|}];
       then loop ()
       else (
         match
-          Exchange_command.parse line ~default_participant:participant
+          Exchange_command.parse
+            line
+            ~default_participant:participant
+            ~directory
         with
         | Error err ->
           print_endline [%string "ERROR: %{Error.to_string_hum err}"];
@@ -92,8 +107,10 @@ market-data feed.|}];
           in
           (match result with
            | None ->
-             print_endline [%string "No book available for %{symbol#Symbol}"]
-           | Some result -> print_endline (Book.to_string result));
+             print_endline
+               [%string "No book available for %{render_symbol symbol}"]
+           | Some result ->
+             print_endline (Book.to_string ~render_symbol result));
           loop ()
         | Ok (Subscribe symbol) ->
           let%bind result =
@@ -111,12 +128,14 @@ market-data feed.|}];
              print_endline
                [%string
                  {|
-Subscribed to %{symbol#Symbol} market data. Updates will appear below.
+Subscribed to %{render_symbol symbol} market data. Updates will appear below.
 Continue entering commands as normal.|}];
              don't_wait_for
                (Pipe.iter_without_pushback reader ~f:(fun event ->
                   print_endline
-                    [%string "[MD] %{Event_format.format_event event}"]));
+                    [%string
+                      "[MD] %{Event_format.format_event ~render_symbol \
+                       event}"]));
              loop ()))
   in
   loop ()

@@ -10,7 +10,7 @@
 type t =
   { fill_id : int
   (** Unique fill identifier, assigned sequentially by the matching engine. *)
-  ; symbol : Symbol.t
+  ; symbol : Symbol_id.t
   ; price : Price.t (** The price at which the trade occurred. *)
   ; size : Size.t (** The number of shares/units traded. *)
   ; aggressor_order_id : Order_id.t
@@ -23,11 +23,20 @@ type t =
   }
 [@@deriving sexp, bin_io]
 
-val to_string : t -> string
+(** [render_symbol] turns the wire id into display text. [lib/types] is
+    name-agnostic — it never learns what a directory is — so the caller
+    supplies the policy: pass [Symbol_id.to_string] for the raw id, or a
+    consumer's [Symbol_directory.render] for the human name. *)
+val to_string : render_symbol:(Symbol_id.t -> string) -> t -> string
 
 (** {2 Convenience accessors} *)
 
 (** The total notional value of the fill in cents (price * size). *)
 val notional_cents : t -> int
 
-val to_participant_view : t -> Participant.t -> string option
+(** As {!to_string}, the caller supplies [render_symbol]. *)
+val to_participant_view
+  :  render_symbol:(Symbol_id.t -> string)
+  -> t
+  -> Participant.t
+  -> string option

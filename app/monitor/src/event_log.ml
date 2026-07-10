@@ -82,8 +82,8 @@ module Filter = struct
     | Substring s -> String.Caseless.is_substring line ~substring:s
   ;;
 
-  let matches t event =
-    let line = Event_format.format_event event in
+  let matches ~render_symbol t event =
+    let line = Event_format.format_event ~render_symbol event in
     List.for_all t ~f:(predicate_matches event line)
   ;;
 end
@@ -93,15 +93,22 @@ type t =
   ; filter : Filter.t
   ; (* Ordered by first appearance — newest symbol last. Reorganising on
        every BBO would be visually noisy. *)
-    bbos_rev : (Symbol.t * Bbo.t) list
+    bbos_rev : (Symbol_id.t * Bbo.t) list
+  ; (* Resolves the wire ids in each event to human names at render time.
+       Fetched once at connect; [Symbol_directory.empty] for id-only tests. *)
+    directory : Symbol_directory.t
   }
 
-let create () = { events_rev = []; filter = Filter.all; bbos_rev = [] }
+let create ~directory =
+  { events_rev = []; filter = Filter.all; bbos_rev = []; directory }
+;;
+
+let render_symbol t = Symbol_directory.render t.directory
 
 let update_bbos bbos_rev symbol bbo =
   let found, updated =
     List.fold_map bbos_rev ~init:false ~f:(fun found (sym, current) ->
-      if Symbol.equal sym symbol
+      if Symbol_id.equal sym symbol
       then true, (sym, bbo)
       else found, (sym, current))
   in
@@ -124,14 +131,17 @@ let set_filter t filter = { t with filter }
 let filter t = t.filter
 
 let visible_events t =
-  List.rev_filter t.events_rev ~f:(Filter.matches t.filter)
+  let render_symbol = render_symbol t in
+  List.rev_filter t.events_rev ~f:(Filter.matches ~render_symbol t.filter)
 ;;
 
 let visible_lines t =
-  List.map (visible_events t) ~f:Event_format.format_event
+  let render_symbol = render_symbol t in
+  List.map (visible_events t) ~f:(Event_format.format_event ~render_symbol)
 ;;
 
 let visible_styled_lines t =
+  let render_symbol = render_symbol t in
   List.map (visible_events t) ~f:(fun event ->
-    Color.of_event event, Event_format.format_event event)
+    Color.of_event event, Event_format.format_event ~render_symbol event)
 ;;

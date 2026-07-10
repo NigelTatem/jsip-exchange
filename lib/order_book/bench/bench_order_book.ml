@@ -41,7 +41,7 @@ open Jsip_order_book
 (* Setup helpers *)
 (* ---------------------------------------------------------------- *)
 
-let aapl = Symbol.of_string "AAPL"
+let aapl = Symbol_id.of_int 0
 let alice = Participant.of_string "Alice"
 let bob = Participant.of_string "Bob"
 
@@ -294,17 +294,39 @@ let bench_submit_sweep ~n =
     prefix: that makes each string comparison in the map walk do comparable
     work, so sweeping [n] reflects the tree's depth rather than accidental
     differences in string length. *)
-let n_symbols n =
-  List.init n ~f:(fun i -> Symbol.of_string (sprintf "SYM%05d" i))
-;;
+let n_symbols n = List.init n ~f:(fun i -> Symbol_id.of_int i)
 
 let engine_with_n_symbols n = Matching_engine.create (n_symbols n)
 
+(* Ex 4's win: the id is on the wire, so the server does no hashing — just a
+   bounds check and an array index. This is the "after" number. *)
 let bench_symbol_lookup ~n =
   let engine = engine_with_n_symbols n in
   let symbol = List.last_exn (n_symbols n) in
-  Bench.Test.create ~name:[%string "symbol_lookup (n=%{n#Int})"] (fun () ->
-    ignore (Matching_engine.book engine symbol : Order_book.t option))
+  Bench.Test.create
+    ~name:[%string "symbol_lookup_id (n=%{n#Int})"]
+    (fun () ->
+       ignore (Matching_engine.book engine symbol : Order_book.t option))
+;;
+
+(* Ex 2's cost model, kept for contrast: the wire carried a name, so the
+   server hashed it to an id before the same array index. Sweeping [n]
+   alongside [bench_symbol_lookup] shows what pushing the id onto the wire
+   buys — one string hash per lookup, gone. *)
+let bench_symbol_lookup_hashed ~n =
+  let engine = engine_with_n_symbols n in
+  let names =
+    List.init n ~f:(fun i -> Symbol.of_string [%string "SYM%{i#Int}"])
+  in
+  let name_to_id = Symbol.Table.create () in
+  List.iteri names ~f:(fun i name ->
+    Hashtbl.set name_to_id ~key:name ~data:(Symbol_id.of_int i));
+  let name = List.last_exn names in
+  Bench.Test.create
+    ~name:[%string "symbol_lookup_hashed (n=%{n#Int})"]
+    (fun () ->
+       let id = Hashtbl.find_exn name_to_id name in
+       ignore (Matching_engine.book engine id : Order_book.t option))
 ;;
 
 (* ---------------------------------------------------------------- *)
@@ -384,6 +406,7 @@ let () =
              (List.map sizes ~f:(fun n -> bench_snapshot ~n)) )
        ; ( "symbol-lookup"
          , Bench.make_command
-             (List.map symbol_counts ~f:(fun n -> bench_symbol_lookup ~n)) )
+             (List.concat_map symbol_counts ~f:(fun n ->
+                [ bench_symbol_lookup ~n; bench_symbol_lookup_hashed ~n ])) )
        ])
 ;;

@@ -267,13 +267,15 @@ let%expect_test "snapshot lists levels in price-time priority order" =
   Order_book.add
     book
     (make_order ~side:Sell ~price_cents:15015 ~order_id:6 ());
-  print_endline (Order_book.snapshot book |> Book.to_string);
+  print_endline
+    (Order_book.snapshot book
+     |> Book.to_string ~render_symbol:Symbol_id.to_string);
   (* The bids and asks below come out in reverse insertion order, not
      best-price-first. Once the book stores orders in price-time priority,
      bids should appear highest-first and asks lowest-first. *)
   [%expect
     {|
-    === AAPL ===
+    === 0 ===
       BIDS:
         $150.00 x100
         $149.95 x100
@@ -316,10 +318,12 @@ let%expect_test "snapshot aggregates orders resting at the same price" =
        ~size:25
        ~participant:Harness.bob
        ());
-  print_endline (Order_book.snapshot book |> Book.to_string);
+  print_endline
+    (Order_book.snapshot book
+     |> Book.to_string ~render_symbol:Symbol_id.to_string);
   [%expect
     {|
-    === AAPL ===
+    === 0 ===
       BIDS:
         $150.00 x150
       ASKS:

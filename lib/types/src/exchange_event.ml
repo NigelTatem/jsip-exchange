@@ -9,7 +9,7 @@ type t =
   | Order_cancel of
       { order_id : Order_id.t
       ; participant : Participant.t
-      ; symbol : Symbol.t
+      ; symbol : Symbol_id.t
       ; remaining_size : Size.t
       ; reason : Cancel_reason.t
       ; client_order_id : Client_order_id.t
@@ -19,11 +19,11 @@ type t =
       ; reason : string
       }
   | Best_bid_offer_update of
-      { symbol : Symbol.t
+      { symbol : Symbol_id.t
       ; bbo : Bbo.t
       }
   | Trade_report of
-      { symbol : Symbol.t
+      { symbol : Symbol_id.t
       ; price : Price.t
       ; size : Size.t
       }

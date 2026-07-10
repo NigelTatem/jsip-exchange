@@ -13,10 +13,10 @@ let description =
    grow without bound while noise traders keep the feed busy."
 ;;
 
-let symbols = [ Symbol.of_string "AAPL" ]
+let symbols = [ Symbol_id.of_int 0 ]
 
 let oracle_config : Fundamental_oracle.Config.t =
-  Symbol.Map.of_alist_exn
+  Symbol_id.Map.of_alist_exn
     (List.map symbols ~f:(fun symbol ->
        ( symbol
        , { Fundamental_oracle.Config.initial_price_cents = 15000

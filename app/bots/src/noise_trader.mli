@@ -24,7 +24,7 @@ open Jsip_types
 
 module Config : sig
   type t =
-    { symbols : Symbol.t list (** Symbols to trade. *)
+    { symbols : Symbol_id.t list (** Symbols to trade. *)
     ; orders_per_tick : int
     (** Orders to submit {e per symbol} on each tick. The intensity knob;
         combine with the runtime's [tick_interval] to set the overall order
@@ -45,7 +45,7 @@ module Config : sig
       fields are required and have no default except [first_client_order_id],
       which defaults to [1]. *)
   val create
-    :  symbols:Symbol.t list
+    :  symbols:Symbol_id.t list
     -> orders_per_tick:int
     -> jitter_cents:int
     -> size:int

@@ -1,5 +1,6 @@
 open! Core
 open Jsip_types
+open Jsip_gateway
 
 module Mode = struct
   type t =
@@ -27,7 +28,7 @@ module Display = struct
   type t =
     { title : string
     ; counter : string
-    ; bbo_panel : (Symbol.t * Bbo.t) list
+    ; bbo_panel : (string * Bbo.t) list
     ; category_chips : Chip.t list
     ; substring_field : substring_field
     ; visible_events : (Event_log.Color.t * string) list
@@ -43,14 +44,16 @@ type t =
   ; committed_substring : string
   ; mode : Mode.t
   ; should_exit : bool
+  ; directory : Symbol_directory.t
   }
 
-let create () =
-  { log = Event_log.create ()
+let create ~directory =
+  { log = Event_log.create ~directory
   ; enabled_categories = Event_log.Category.all
   ; committed_substring = ""
   ; mode = Browsing
   ; should_exit = false
+  ; directory
   }
 ;;
 
@@ -176,7 +179,9 @@ let display t : Display.t =
   in
   { title = "JSIP Exchange Monitor"
   ; counter = [%string "%{visible_count#Int} of %{total#Int} events"]
-  ; bbo_panel = Event_log.current_bbos t.log
+  ; bbo_panel =
+      List.map (Event_log.current_bbos t.log) ~f:(fun (symbol, bbo) ->
+        Symbol_directory.render t.directory symbol, bbo)
   ; category_chips =
       [ cat_chip '1' Order_lifecycle
       ; cat_chip '2' Trade

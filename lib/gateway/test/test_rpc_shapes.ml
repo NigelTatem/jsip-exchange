@@ -29,7 +29,7 @@ let%expect_test "submit-order RPC" =
        : Async_rpc_kernel.Rpc_shapes.t)];
   [%expect
     {|
-    (Rpc (query accb8b9abcef75a3f4e6c35b0cb78f90)
+    (Rpc (query 395f9f3320bba7e0056f16f61cd8ae19)
      (response 27f76252e5181aab209cd62aa6e42268))
     |}];
   return ()
@@ -69,7 +69,7 @@ let%expect_test "session feed RPC" =
     {|
     (Streaming_rpc (query 86ba5df747eec837f0b391dd49f33f9e)
      (initial_response 86ba5df747eec837f0b391dd49f33f9e)
-     (update_response 2487a6fbe1cc9ae8a9306ccec1257362)
+     (update_response f9491a361136d780b886bcbd33e43ed0)
      (error 52966f4a49a77bfdff668e9cc61511b3))
     |}];
   return ()
@@ -82,8 +82,21 @@ let%expect_test "book-query RPC" =
        : Async_rpc_kernel.Rpc_shapes.t)];
   [%expect
     {|
-    (Rpc (query d9a8da25d5656b016fb4dbdc2e4197fb)
-     (response 9bf9d93dd466a19cac18ecff7cd287af))
+    (Rpc (query 698cfa4093fe5e51523842d37b92aeac)
+     (response 69122cea75d1c08088ac96792b33f39f))
+    |}];
+  return ()
+;;
+
+let%expect_test "symbol-directory RPC" =
+  print_s
+    [%sexp
+      (Rpc.Rpc.shapes Rpc_protocol.symbol_directory_rpc
+       : Async_rpc_kernel.Rpc_shapes.t)];
+  [%expect
+    {|
+    (Rpc (query 86ba5df747eec837f0b391dd49f33f9e)
+     (response 4c1e50c93b38c2ad0554cbd929bef3ac))
     |}];
   return ()
 ;;
@@ -95,9 +108,9 @@ let%expect_test "market-data RPC" =
        : Async_rpc_kernel.Rpc_shapes.t)];
   [%expect
     {|
-    (Streaming_rpc (query 296be80010ace497614f92952e5510c4)
+    (Streaming_rpc (query 4cd553520709511864846bda25c448d0)
      (initial_response 86ba5df747eec837f0b391dd49f33f9e)
-     (update_response 2487a6fbe1cc9ae8a9306ccec1257362)
+     (update_response f9491a361136d780b886bcbd33e43ed0)
      (error 52966f4a49a77bfdff668e9cc61511b3))
     |}];
   return ()
@@ -111,7 +124,7 @@ let%expect_test "exchange-stats RPC" =
   [%expect
     {|
     (Rpc (query 86ba5df747eec837f0b391dd49f33f9e)
-     (response 0e1b9764501dce783530d88516807ec5))
+     (response 70d20f080dd3a775dc1aac129494fe5d))
     |}];
   return ()
 ;;
@@ -125,7 +138,7 @@ let%expect_test "audit-log RPC" =
     {|
     (Streaming_rpc (query 86ba5df747eec837f0b391dd49f33f9e)
      (initial_response 86ba5df747eec837f0b391dd49f33f9e)
-     (update_response 2487a6fbe1cc9ae8a9306ccec1257362)
+     (update_response f9491a361136d780b886bcbd33e43ed0)
      (error 52966f4a49a77bfdff668e9cc61511b3))
     |}];
   return ()

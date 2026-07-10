@@ -28,7 +28,7 @@ end
 
 module Symbol_depth = struct
   type t =
-    { symbol : Symbol.t
+    { symbol : Symbol_id.t
     ; bbo : Bbo.t
     ; bid_depth : Size.t
     ; ask_depth : Size.t

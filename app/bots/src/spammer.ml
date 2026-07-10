@@ -22,7 +22,7 @@ module Bot_runtime = Jsip_bot_runtime.Bot_runtime
 
 module Config = struct
   type t =
-    { symbols : Symbol.t list
+    { symbols : Symbol_id.t list
     (** Symbols to spam; each tick's burst round-robins across them. Must be
         non-empty — [on_start] rejects an empty list. *)
     ; orders_per_tick : int

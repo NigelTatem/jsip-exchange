@@ -9,11 +9,11 @@ let description =
    hammering the cancel path and duplicate-ID bookkeeping."
 ;;
 
-let symbol = Symbol.of_string "AAPL"
+let symbol = Symbol_id.of_int 0
 let num_bots = 4
 
 let oracle_config : Jsip_fundamental.Fundamental_oracle.Config.t =
-  Symbol.Map.of_alist_exn
+  Symbol_id.Map.of_alist_exn
     [ ( symbol
       , { Jsip_fundamental.Fundamental_oracle.Config.initial_price_cents =
             15000

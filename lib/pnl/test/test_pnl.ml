@@ -60,7 +60,7 @@ let%expect_test "long: open, add, mark, partially close" =
     ("after buys" Alice
      (summary
       ((per_symbol
-        (((symbol AAPL) (position 200) (average_entry_price (15100))
+        (((symbol 0) (position 200) (average_entry_price (15100))
           (reference_price ()) (realized_cents 0) (unrealized_cents 0))))
        (total_realized_cents 0) (total_unrealized_cents 0))))
     |}];
@@ -76,7 +76,7 @@ let%expect_test "long: open, add, mark, partially close" =
     ("after $155 print" Alice
      (summary
       ((per_symbol
-        (((symbol AAPL) (position 200) (average_entry_price (15100))
+        (((symbol 0) (position 200) (average_entry_price (15100))
           (reference_price (15500)) (realized_cents 0) (unrealized_cents 80000))))
        (total_realized_cents 0) (total_unrealized_cents 80000))))
     |}];
@@ -98,7 +98,7 @@ let%expect_test "long: open, add, mark, partially close" =
     ("after selling 50 @ $160" Alice
      (summary
       ((per_symbol
-        (((symbol AAPL) (position 150) (average_entry_price (15100))
+        (((symbol 0) (position 150) (average_entry_price (15100))
           (reference_price (15500)) (realized_cents 45000)
           (unrealized_cents 60000))))
        (total_realized_cents 45000) (total_unrealized_cents 60000))))
@@ -130,7 +130,7 @@ let%expect_test "resting short side is tracked too" =
     ("bob short, marked $148" Bob
      (summary
       ((per_symbol
-        (((symbol AAPL) (position -100) (average_entry_price (15000))
+        (((symbol 0) (position -100) (average_entry_price (15000))
           (reference_price (14800)) (realized_cents 0) (unrealized_cents 20000))))
        (total_realized_cents 0) (total_unrealized_cents 20000))))
     |}]

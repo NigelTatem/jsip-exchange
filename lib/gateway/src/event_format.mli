@@ -9,8 +9,19 @@
 open! Core
 open Jsip_types
 
-(** Format an exchange event as a single line of human-readable text. *)
-val format_event : Exchange_event.t -> string
+(** Format an exchange event as a single line of human-readable text.
 
-(** Format a list of events, one per line. *)
-val format_events : Exchange_event.t list -> string
+    [render_symbol] resolves the wire-level {!Symbol_id.t} to display text.
+    The caller supplies the policy: [Symbol_id.to_string] for the raw id, or
+    a client/monitor's [Symbol_directory.render] for the human symbol name. *)
+val format_event
+  :  render_symbol:(Symbol_id.t -> string)
+  -> Exchange_event.t
+  -> string
+
+(** Format a list of events, one per line. See {!format_event} for
+    [render_symbol]. *)
+val format_events
+  :  render_symbol:(Symbol_id.t -> string)
+  -> Exchange_event.t list
+  -> string

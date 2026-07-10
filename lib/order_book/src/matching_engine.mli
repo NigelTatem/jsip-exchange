@@ -12,7 +12,7 @@ type t [@@deriving sexp_of]
 
 (** Create a matching engine for the given symbols. Each symbol gets its own
     order book. *)
-val create : Symbol.t list -> t
+val create : Symbol_id.t list -> t
 
 (** {2 Order submission} *)
 
@@ -34,4 +34,4 @@ val cancel
 
 (** The order book for a given symbol, or [None] if the symbol is not traded
     on this engine. *)
-val book : t -> Symbol.t -> Order_book.t option
+val book : t -> Symbol_id.t -> Order_book.t option

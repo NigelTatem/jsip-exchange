@@ -41,7 +41,7 @@ module Display : sig
 
   module Symbol_row : sig
     type t =
-      { symbol : Symbol.t
+      { symbol : Symbol_id.t
       ; bid : string (** e.g. ["$150.00 x60"] or ["—"]. *)
       ; ask : string
       ; bid_depth : int

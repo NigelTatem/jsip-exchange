@@ -21,12 +21,30 @@ end
 
 type t =
   | Submit of Order.Request.t
-  | Book of Symbol.t
-  | Subscribe of Symbol.t
+  | Book of Symbol_id.t
+  | Subscribe of Symbol_id.t
   | Cancel of Client_order_id.t
   | Stats
 
-let parse ?default_participant line : t Or_error.t =
+(* Resolve a symbol token to its id. A human types the name ([AAPL]); we look
+   it up in the directory. As a fallback — an empty directory (the int-based
+   tests), or a raw id typed directly — we accept a bare int. An unknown name
+   is rejected rather than silently minted into an id. *)
+let resolve_symbol directory token : Symbol_id.t Or_error.t =
+  let by_name =
+    match Or_error.try_with (fun () -> Symbol.of_string token) with
+    | Ok name -> Symbol_directory.id_of_name directory name
+    | Error _ -> None
+  in
+  match by_name with
+  | Some id -> Ok id
+  | None ->
+    (match Int.of_string_opt token with
+     | Some n -> Ok (Symbol_id.of_int n)
+     | None -> Or_error.errorf "unknown symbol: %s" token)
+;;
+
+let parse ?default_participant ~directory line : t Or_error.t =
   let default_participant =
     Option.value
       default_participant
@@ -70,9 +88,7 @@ let parse ?default_participant line : t Or_error.t =
             let%bind price =
               Or_error.try_with (fun () -> Price.of_string price_str)
             in
-            let%bind symbol =
-              Or_error.try_with (fun () -> Symbol.of_string symbol_str)
-            in
+            let%bind symbol = resolve_symbol directory symbol_str in
             let%bind time_in_force, rest =
               match rest with
               | tif_str :: rest' ->
@@ -111,9 +127,7 @@ let parse ?default_participant line : t Or_error.t =
        | Verb.Book ->
          (match rest with
           | [ symbol_str ] ->
-            let%bind symbol =
-              Or_error.try_with (fun () -> Symbol.of_string symbol_str)
-            in
+            let%bind symbol = resolve_symbol directory symbol_str in
             Ok (Book symbol)
           | [] -> Or_error.error_string "expected: BOOK <symbol>"
           | _ ->
@@ -123,9 +137,7 @@ let parse ?default_participant line : t Or_error.t =
        | Verb.Subscribe ->
          (match rest with
           | [ symbol_str ] ->
-            let%bind symbol =
-              Or_error.try_with (fun () -> Symbol.of_string symbol_str)
-            in
+            let%bind symbol = resolve_symbol directory symbol_str in
             Ok (Subscribe symbol)
           | [] -> Or_error.error_string "expected: SUBSCRIBE <symbol>"
           | _ ->

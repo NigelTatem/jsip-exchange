@@ -12,14 +12,14 @@ let description =
    recomputation."
 ;;
 
-let symbols = [ Symbol.of_string "AAPL"; Symbol.of_string "MSFT" ]
+let symbols = [ Symbol_id.of_int 0; Symbol_id.of_int 1 ]
 
 (* A flat fundamental (no volatility, no mean reversion) keeps the touch
    fixed so the fillers' offset band is guaranteed to stay non-marketable for
    the whole run. The book filler doesn't need price movement to do its
    damage. *)
 let oracle_config : Fundamental_oracle.Config.t =
-  Symbol.Map.of_alist_exn
+  Symbol_id.Map.of_alist_exn
     (List.map symbols ~f:(fun symbol ->
        ( symbol
        , { Fundamental_oracle.Config.initial_price_cents = 15000

@@ -10,10 +10,20 @@ open Jsip_types
 
 type t
 
-(** Start a server on the given port with the given symbols. Returns the
-    server handle and the port it is actually listening on (useful when you
-    pass port 0 to get an OS-assigned port). *)
-val start : symbols:Symbol.t list -> port:int -> unit -> t Deferred.t
+(** Start a server on the given port with the given symbol ids. [directory]
+    carries the name<->id mapping served over
+    {!Rpc_protocol.symbol_directory_rpc}; pass {!Symbol_directory.empty} for
+    an int-only server (the tests do). The [main] binary builds the
+    authoritative directory and passes both it and its ids
+    ({!Symbol_directory.ids}) here. Returns the server handle; read the port
+    it is actually listening on with {!port} (useful when you pass port 0 to
+    get an OS-assigned port). *)
+val start
+  :  directory:Symbol_directory.t
+  -> symbols:Symbol_id.t list
+  -> port:int
+  -> unit
+  -> t Deferred.t
 
 (** The port the server is listening on. *)
 val port : t -> int

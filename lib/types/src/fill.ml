@@ -2,7 +2,7 @@ open! Core
 
 type t =
   { fill_id : int
-  ; symbol : Symbol.t
+  ; symbol : Symbol_id.t
   ; price : Price.t
   ; size : Size.t
   ; aggressor_order_id : Order_id.t
@@ -16,6 +16,7 @@ type t =
 [@@deriving sexp, bin_io]
 
 let to_string
+  ~render_symbol
   ({ fill_id
    ; symbol
    ; price
@@ -33,7 +34,7 @@ let to_string
   sprintf
     "fill_id=%d %s %s x%d aggressor=%s(%s) %s %s resting=%s(%d) %d"
     fill_id
-    (Symbol.to_string symbol)
+    (render_symbol symbol)
     (Price.to_string_dollar price)
     (Size.to_int size)
     (Order_id.to_string aggressor_order_id)
@@ -47,17 +48,14 @@ let to_string
 
 let notional_cents t = Price.to_int_cents t.price * Size.to_int t.size
 
-let to_participant_view (t : t) (participant : Participant.t) : string option
+let to_participant_view ~render_symbol (t : t) (participant : Participant.t)
+  : string option
   =
+  let symbol = render_symbol t.symbol in
   if Participant.equal t.resting_participant participant
-  then
-    Some
-      [%string
-        "You sold %{t.size#Size} %{t.symbol#Symbol} at %{t.price#Price}"]
+  then Some [%string "You sold %{t.size#Size} %{symbol} at %{t.price#Price}"]
   else if Participant.equal t.aggressor_participant participant
   then
-    Some
-      [%string
-        "You bought %{t.size#Size} %{t.symbol#Symbol} at %{t.price#Price}"]
+    Some [%string "You bought %{t.size#Size} %{symbol} at %{t.price#Price}"]
   else None
 ;;

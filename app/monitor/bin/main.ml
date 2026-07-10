@@ -38,12 +38,18 @@ let subscribe_audit_log ~connection ~host ~port =
   | Ok (Ok (pipe, _md)) -> pipe
 ;;
 
+let fetch_directory ~connection =
+  Rpc.Rpc.dispatch_exn Rpc_protocol.symbol_directory_rpc connection ()
+  >>| Symbol_directory.of_pairs
+;;
+
 let main ~host ~port () =
   let%bind connection = connect_to_exchange ~host ~port in
+  let%bind directory = fetch_directory ~connection in
   let%bind events = subscribe_audit_log ~connection ~host ~port in
   let%map result =
     Bonsai_term.start_with_exit (fun ~exit ~dimensions graph ->
-      Term_app.app ~events ~exit ~dimensions graph)
+      Term_app.app ~directory ~events ~exit ~dimensions graph)
   in
   ok_exn result
 ;;

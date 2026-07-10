@@ -61,7 +61,7 @@ let%expect_test "a multi-symbol subscriber appears in stats exactly once" =
       ~registry:(Participant_registry.create ())
       ()
   in
-  let msft = Symbol.of_string "MSFT" in
+  let msft = Symbol_id.of_int 1 in
   let (_ : Exchange_event.t Pipe.Reader.t) =
     Dispatcher.subscribe_market_data
       dispatcher
@@ -180,13 +180,13 @@ let%expect_test "stats: participant activity merges submits with resting \
     print_s [%message "" ~events_dispatched:(stats.events_dispatched : int)];
     [%expect
       {|
-      [Alice] ACCEPTED id=1 AAPL BUY 100@$150.00 DAY
-      [Bob] ACCEPTED id=2 AAPL SELL 40@$150.00 DAY
-      [Bob] FILL fill_id=1 AAPL $150.00 x40 aggressor=2(Bob) SELL 1 resting=Alice(0) 0
-      [Alice] FILL fill_id=1 AAPL $150.00 x40 aggressor=2(Bob) SELL 1 resting=Alice(0) 0
+      [Alice] ACCEPTED id=1 0 BUY 100@$150.00 DAY
+      [Bob] ACCEPTED id=2 0 SELL 40@$150.00 DAY
+      [Bob] FILL fill_id=1 0 $150.00 x40 aggressor=2(Bob) SELL 1 resting=Alice(0) 0
+      [Alice] FILL fill_id=1 0 $150.00 x40 aggressor=2(Bob) SELL 1 resting=Alice(0) 0
       (((participant Alice) (submits 1) (resting_orders 1))
        ((participant Bob) (submits 1) (resting_orders 0)))
-      (((symbol AAPL) (bbo ((bid (((price 15000) (size 60)))) (ask ())))
+      (((symbol 0) (bbo ((bid (((price 15000) (size 60)))) (ask ())))
         (bid_depth 60) (ask_depth 0)))
       (events_dispatched 6)
       |}];

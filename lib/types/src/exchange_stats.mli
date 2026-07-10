@@ -68,7 +68,7 @@ end
 module Symbol_depth : sig
   (** One row per symbol the engine trades. *)
   type t =
-    { symbol : Symbol.t
+    { symbol : Symbol_id.t
     ; bbo : Bbo.t (** Best bid/offer, with per-level sizes. *)
     ; bid_depth : Size.t (** Total resting size across all bid levels. *)
     ; ask_depth : Size.t (** Total resting size across all ask levels. *)
