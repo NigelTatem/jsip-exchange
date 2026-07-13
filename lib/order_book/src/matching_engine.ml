@@ -62,8 +62,8 @@ let rec match_loop ~used_client_ids ~book ~order ~fill_id =
          back if any size remains. Routing the size change through
          [remove]/[add] is what keeps each price level's cached [total_size]
          exact — an in-place [Order.fill] alone would leave the cache stale.
-         Re-adding under the same [order_id] preserves the order's position in
-         the level's FIFO queue. *)
+         Re-adding under the same [order_id] preserves the order's position
+         in the level's FIFO queue. *)
       Order_book.remove book (Order.order_id resting);
       Order.fill resting ~by:fill_size;
       if Order.is_fully_filled resting

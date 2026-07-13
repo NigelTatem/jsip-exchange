@@ -8,11 +8,11 @@ open Jsip_types
    in arrival order, [Map.min_elt] is the oldest order at this price, so the
    map doubles as a FIFO queue with no separate queue to maintain.
 
-   [total_size] is the sum of every order's remaining size. It is kept in sync
-   on every [add]/[remove] so that top-of-book and snapshot queries can read a
-   level's size in [O(log price_levels)] instead of re-summing its orders. This
-   cache is the whole point of the by-price layout — and its invariant (the
-   sum is always exact) is the cost we take on in exchange. *)
+   [total_size] is the sum of every order's remaining size. It is kept in
+   sync on every [add]/[remove] so that top-of-book and snapshot queries can
+   read a level's size in [O(log price_levels)] instead of re-summing its
+   orders. This cache is the whole point of the by-price layout — and its
+   invariant (the sum is always exact) is the cost we take on in exchange. *)
 module Price_level = struct
   type t =
     { orders : Order.t Map.M(Order_id).t
@@ -30,8 +30,7 @@ module Price_level = struct
   let front t = Option.map (Map.min_elt t.orders) ~f:snd
 
   let add t order =
-    { orders =
-        Map.set t.orders ~key:(Order.order_id order) ~data:order
+    { orders = Map.set t.orders ~key:(Order.order_id order) ~data:order
     ; total_size = Size.( + ) t.total_size (Order.remaining_size order)
     }
   ;;
