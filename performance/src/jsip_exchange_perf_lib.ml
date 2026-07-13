@@ -1,5 +1,6 @@
 open! Core
 open Core_bench
+module Histogram = Histogram
 
 (* Sizes are kept modest: [Silly_store] is O(n) per operation, so [build] is
    ~O(n^2). *)
@@ -179,5 +180,6 @@ let command =
     ; "sequential", Bench.make_command bench_sequential
     ; "associative", Bench.make_command bench_associative
     ; "allocation", Bench.make_command bench_allocation
+    ; "replay", Replay.command
     ]
 ;;

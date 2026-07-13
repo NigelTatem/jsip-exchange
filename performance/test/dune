@@ -1,0 +1,6 @@
+(library
+ (name jsip_exchange_perf_lib_test)
+ (libraries jsip_exchange_perf_lib core)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane)))
