@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1783697852144,
+  "lastUpdate": 1783957630298,
   "repoUrl": "https://github.com/NigelTatem/jsip-exchange",
   "entries": {
     "Order book benchmark": [
@@ -3974,6 +3974,228 @@ window.BENCHMARK_DATA = {
           {
             "name": "find_match_alloc (n=100)",
             "value": 22.17553969335068,
+            "unit": "ns"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "ubuntu@ip-172-31-29-102.us-east-2.compute.internal",
+            "name": "nigeltatem2@gmail.com"
+          },
+          "committer": {
+            "email": "ubuntu@ip-172-31-29-102.us-east-2.compute.internal",
+            "name": "nigeltatem2@gmail.com"
+          },
+          "distinct": true,
+          "id": "35b055c93d50c12d2df400b22620defaaa49f364",
+          "message": "Part 4: Exercise 5 — order book by price\n\nReplace the flat (Price, Order_id) map with a Price -> Price_level map\nthat caches each level's total_size. Top-of-book and snapshot now read a\nlevel's size instead of sweeping/sorting orders: snapshot goes O(n) -> O(1)\nand best_bid_offer stops climbing with book depth. Cost is a second map hop\non per-id navigation (~5 extra words/lookup).\n\nRoute partial-fill size changes through Order_book.remove/add so the cached\ntotal_size stays exact under the engine's in-place Order.fill.",
+          "timestamp": "2026-07-13T15:35:16Z",
+          "tree_id": "cf0a04e79e4a60e3e78a6b606376c7dc86c471c9",
+          "url": "https://github.com/NigelTatem/jsip-exchange/commit/35b055c93d50c12d2df400b22620defaaa49f364"
+        },
+        "date": 1783957629926,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "find_match (n=10)",
+            "value": 27.99610625796251,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=50)",
+            "value": 28.838440495652815,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=100)",
+            "value": 30.689206207521813,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=500)",
+            "value": 32.55417787886129,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=1000)",
+            "value": 33.79376980436957,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=5000)",
+            "value": 35.15308452756515,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match (n=10000)",
+            "value": 36.19502851724634,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=10)",
+            "value": 28.206300521385437,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=50)",
+            "value": 29.526443337793097,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=100)",
+            "value": 30.224836634220086,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=500)",
+            "value": 32.985485558046015,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=1000)",
+            "value": 34.29859890234802,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=5000)",
+            "value": 35.66841033948562,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_miss (n=10000)",
+            "value": 36.508225629571605,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=10)",
+            "value": 19.3121377536113,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=50)",
+            "value": 20.529193146108412,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=100)",
+            "value": 22.079265438370236,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=500)",
+            "value": 24.319356933525192,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=1000)",
+            "value": 25.764285398869074,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=5000)",
+            "value": 27.431140397015387,
+            "unit": "ns"
+          },
+          {
+            "name": "best_bid_offer (n=10000)",
+            "value": 27.464019271396626,
+            "unit": "ns"
+          },
+          {
+            "name": "add+remove (n=100)",
+            "value": 521.3677095345632,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=10)",
+            "value": 633.4685496226114,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=50)",
+            "value": 631.9184310669564,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=100)",
+            "value": 630.2885301172146,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=500)",
+            "value": 628.9131776818878,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=1000)",
+            "value": 635.9694852274488,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=5000)",
+            "value": 630.0805365384334,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_cross (n=10000)",
+            "value": 627.9461759789981,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=10)",
+            "value": 291.4009500634477,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=50)",
+            "value": 293.2265603587613,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=100)",
+            "value": 285.2758250010023,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=500)",
+            "value": 284.78402833970773,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=1000)",
+            "value": 285.40319060246594,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=5000)",
+            "value": 288.3951120112398,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_ioc_miss (n=10000)",
+            "value": 284.94202577177964,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_sweep_10_levels",
+            "value": 1227.076263118336,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_sweep_50_levels",
+            "value": 3030.366300262136,
+            "unit": "ns"
+          },
+          {
+            "name": "submit_sweep_100_levels",
+            "value": 5266.614760115508,
+            "unit": "ns"
+          },
+          {
+            "name": "find_match_alloc (n=100)",
+            "value": 30.22476137815045,
             "unit": "ns"
           }
         ]
