@@ -372,8 +372,7 @@ let bench_find_match_alloc ~n =
 (* Main *)
 (* ---------------------------------------------------------------- *)
 
-(* Rather than running all tests at once we seperate using benchmark notation *)
-let sizes = [ 10; 50; 100; 500 ]
+let sizes = [ 10; 50; 100; 500; 1_000; 5_000; 10_000 ]
 
 (* Symbol-lookup sweeps over far larger counts than the order-book
    benchmarks: the O(log n) string comparisons in [Map.find] only pull away

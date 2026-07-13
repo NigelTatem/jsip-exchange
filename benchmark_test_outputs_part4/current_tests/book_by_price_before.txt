@@ -1,0 +1,45 @@
+Estimated testing time 3m20s (40 benchmarks x 5s). Change using '-quota'.
+                                                                                                        
+  Name                                       Prom/Run   mjWd/Run     Time/Run     mWd/Run   Percentage  
+ ------------------------------------------ ---------- ---------- ------------ ----------- ------------ 
+  find_match (n=10)                                                   33.93ns      10.00w        0.46%  
+  find_match (n=50)                                                   37.30ns      10.00w        0.51%  
+  find_match (n=100)                                                  38.45ns      10.00w        0.52%  
+  find_match (n=500)                                                  43.89ns      10.00w        0.60%  
+  find_match (n=1000)                                                 41.85ns      10.00w        0.57%  
+  find_match (n=5000)                                                 43.05ns      10.00w        0.59%  
+  find_match (n=10000)                                                46.08ns      10.00w        0.63%  
+  find_match_miss (n=10)                                              32.68ns       8.00w        0.45%  
+  find_match_miss (n=50)                                              35.87ns       8.00w        0.49%  
+  find_match_miss (n=100)                                             36.01ns       8.00w        0.49%  
+  find_match_miss (n=500)                                             44.89ns       8.00w        0.61%  
+  find_match_miss (n=1000)                                            41.33ns       8.00w        0.56%  
+  find_match_miss (n=5000)                                            42.71ns       8.00w        0.58%  
+  find_match_miss (n=10000)                                           44.25ns       8.00w        0.60%  
+  best_bid_offer (n=10)                                              177.86ns      74.00w        2.42%  
+  best_bid_offer (n=50)                                              235.45ns      84.00w        3.21%  
+  best_bid_offer (n=100)                                             263.11ns      89.00w        3.59%  
+  best_bid_offer (n=500)                                             345.23ns     104.00w        4.71%  
+  best_bid_offer (n=1000)                                            378.32ns     109.00w        5.16%  
+  best_bid_offer (n=5000)                                            469.64ns     119.00w        6.40%  
+  best_bid_offer (n=10000)                                           521.19ns     124.00w        7.11%  
+  add+remove (n=100)                                                 831.10ns     224.00w       11.33%  
+  submit_ioc_cross (n=10)                                            993.20ns     293.00w       13.54%  
+  submit_ioc_cross (n=50)                                            999.63ns     293.00w       13.63%  
+  submit_ioc_cross (n=100)                                         1_036.16ns     293.00w       14.13%  
+  submit_ioc_cross (n=500)                                         1_052.71ns     293.00w       14.35%  
+  submit_ioc_cross (n=1000)                                        1_029.37ns     293.00w       14.03%  
+  submit_ioc_cross (n=5000)                                        1_018.38ns     293.00w       13.88%  
+  submit_ioc_cross (n=10000)                                         961.32ns     293.00w       13.11%  
+  submit_ioc_miss (n=10)                                             627.23ns     168.00w        8.55%  
+  submit_ioc_miss (n=50)                                             591.64ns     168.00w        8.07%  
+  submit_ioc_miss (n=100)                                            592.60ns     168.00w        8.08%  
+  submit_ioc_miss (n=500)                                            607.90ns     168.00w        8.29%  
+  submit_ioc_miss (n=1000)                                           601.05ns     168.00w        8.19%  
+  submit_ioc_miss (n=5000)                                           594.93ns     168.00w        8.11%  
+  submit_ioc_miss (n=10000)                                          631.15ns     168.00w        8.60%  
+  submit_sweep_10_levels                                           1_819.71ns     532.00w       24.81%  
+  submit_sweep_50_levels                        0.15w      0.15w   4_446.01ns   1_372.00w       60.61%  
+  submit_sweep_100_levels                       0.28w      0.28w   7_335.12ns   2_422.00w      100.00%  
+  find_match_alloc (n=100, 7.0 words/call)                            36.57ns      10.00w        0.50%  
+                                                                                                        
